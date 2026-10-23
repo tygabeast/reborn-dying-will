@@ -47,14 +47,28 @@ public class AbilityPanel implements LayeredDraw.Layer {
         if (kit.isEmpty()) {
             lines.add(new Line(Component.translatable("hud.reborn_dying_will.panel.no_kit"), DIM));
         }
+        var weapon = com.reborndw.infusion.InfusionHelper.clientSource(mc.player, d);
         for (KitInfo.Entry e : kit) {
             switch (e.slot()) {
                 case PASSIVE -> lines.add(new Line(Component.translatable("hud.reborn_dying_will.panel.passive")
                         .append(Component.translatable(e.nameKey())), LIT));
-                case PRIMARY -> lines.add(abilityLine(ClientSetup.PRIMARY, e, d));
-                case SECONDARY -> lines.add(abilityLine(ClientSetup.SECONDARY, e, d));
+                case PRIMARY -> { if (weapon == null) lines.add(abilityLine(ClientSetup.PRIMARY, e, d)); }
+                case SECONDARY -> { if (weapon == null) lines.add(abilityLine(ClientSetup.SECONDARY, e, d)); }
             }
         }
+        if (weapon != null) {
+            // the held infused weapon's moves take the Primary and Secondary keys
+            String cat = weapon.category().id();
+            lines.add(new Line(Component.translatable("hud.reborn_dying_will.panel.weapon",
+                    Component.translatable("category.reborn_dying_will." + cat),
+                    Component.translatable(weapon.toggle() ? "hud.reborn_dying_will.panel.toggle_source" : "hud.reborn_dying_will.panel.anvil_source"),
+                    weapon.eff().name()), LIT));
+            lines.add(moveLine(ClientSetup.PRIMARY, "move." + cat + ".primary", com.reborndw.ability.WeaponMoves.PRIMARY_RANK, weapon.eff(), false));
+            boolean charged = weapon.category() == com.reborndw.infusion.WeaponCategory.HEAVY || weapon.category() == com.reborndw.infusion.WeaponCategory.FISTS;
+            lines.add(moveLine(ClientSetup.SECONDARY, "move." + cat + ".secondary", com.reborndw.ability.WeaponMoves.SECONDARY_RANK, weapon.eff(), charged));
+        }
+        lines.add(new Line(keyed(ClientSetup.INFUSE, Component.translatable(d.infuseToggle
+                ? "hud.reborn_dying_will.panel.infuse_on" : "hud.reborn_dying_will.panel.infuse_off"), !d.syncedHasRing), d.syncedHasRing ? LIT : DIM));
         lines.add(new Line(keyed(ClientSetup.SIGNATURE, Component.translatable("hud.reborn_dying_will.panel.signature"), true)
                 .append(Component.translatable("hud.reborn_dying_will.panel.needs_gear")), DIM));
         MutableComponent hyper = keyed(ClientSetup.HYPER, Component.translatable(d.form == Form.HYPER
@@ -87,6 +101,14 @@ public class AbilityPanel implements LayeredDraw.Layer {
         if (!e.style().isEmpty()) text.append(Component.translatable("hud.reborn_dying_will.panel." + e.style()));
         if (!d.syncedHasRing) text.append(Component.translatable("hud.reborn_dying_will.panel.needs_ring"));
         else if (!usable) text.append(Component.translatable("hud.reborn_dying_will.panel.needs_rank", e.minRank().name()));
+        return new Line(text, usable ? LIT : DIM);
+    }
+
+    private static Line moveLine(KeyMapping key, String id, com.reborndw.flame.Rank need, com.reborndw.flame.Rank eff, boolean hold) {
+        boolean usable = eff.atLeast(need);
+        MutableComponent text = keyed(key, Component.translatable("ability.reborn_dying_will." + id), !usable);
+        if (hold) text.append(Component.translatable("hud.reborn_dying_will.panel.hold"));
+        if (!usable) text.append(Component.translatable("hud.reborn_dying_will.panel.needs_rank", need.name()));
         return new Line(text, usable ? LIT : DIM);
     }
 

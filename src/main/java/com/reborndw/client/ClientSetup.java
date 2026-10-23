@@ -27,6 +27,7 @@ public final class ClientSetup {
     public static final KeyMapping SWITCH_FLAME = key("switch_flame", GLFW.GLFW_KEY_Y);
     public static final KeyMapping RELEASE = key("release", GLFW.GLFW_KEY_V);
     public static final KeyMapping TOGGLE_PANEL = key("toggle_panel", GLFW.GLFW_KEY_J);
+    public static final KeyMapping INFUSE = key("infuse", GLFW.GLFW_KEY_G);
 
     private ClientSetup() {}
 
@@ -43,6 +44,7 @@ public final class ClientSetup {
         event.register(SWITCH_FLAME);
         event.register(RELEASE);
         event.register(TOGGLE_PANEL);
+        event.register(INFUSE);
     }
 
     @SubscribeEvent
@@ -62,6 +64,7 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void screens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
         event.register(ModRegistry.RING_FORGE_MENU.get(), RingForgeScreen::new);
+        event.register(ModRegistry.INFUSION_ANVIL_MENU.get(), InfusionAnvilScreen::new);
     }
 
     /** Gems and the gems set in rings take their flame's colour. */

@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#c:tools/gun",
+      "required": false
+    },
+    {
+      "id": "#c:guns",
+      "required": false
+    }
+  ]
+}

@@ -66,6 +66,32 @@ public final class KitEvents {
                 sl.sendParticles(ParticleTypes.SPLASH, attacker.getX(), attacker.getY() + 1, attacker.getZ(), 20, 0.4, 0.5, 0.4, 0.1);
             return;
         }
+        if (victim instanceof ServerPlayer vp) {
+            FlameData d = FlameLogic.get(vp);
+            // an infused blade's counter stance: the hit is turned back on the attacker
+            if (d.counterTicks > 0 && isMelee(src) && src.getEntity() instanceof LivingEntity attacker) {
+                var s = com.reborndw.infusion.InfusionHelper.source(vp);
+                d.counterTicks = 0;
+                event.setCanceled(true);
+                if (s != null) {
+                    float dmg = (float) (vp.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * 1.5 * s.strength());
+                    com.reborndw.ability.FlameDamage.deal(vp, attacker, s.flame(), dmg, s.eff(), 0);
+                }
+                vp.level().playSound(null, vp.blockPosition(), SoundEvents.TRIDENT_HIT, SoundSource.PLAYERS, 0.8F, 1.6F);
+                return;
+            }
+            // an infused shield's brace: frontal hits are blocked, projectiles sent back
+            if (d.braceTicks > 0 && !src.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+                var from = src.getSourcePosition();
+                boolean front = from == null || from.subtract(vp.position()).normalize().dot(vp.getLookAngle().multiply(1, 0, 1).normalize()) > 0.1;
+                if (front) {
+                    event.setCanceled(true);
+                    if (src.getDirectEntity() instanceof Projectile proj) com.reborndw.infusion.InfusionEffects.reflect(vp, proj);
+                    vp.level().playSound(null, vp.blockPosition(), SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.8F, 1.2F);
+                    return;
+                }
+            }
+        }
         // Lightning's Harden
         if (victim.hasEffect(ModRegistry.HARDENED) && !src.is(DamageTypeTags.BYPASSES_INVULNERABILITY))
             event.setAmount((float) (event.getAmount() * (1 - KitConfig.HARDEN_REDUCTION.get())));

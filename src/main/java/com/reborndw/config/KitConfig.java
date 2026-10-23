@@ -42,6 +42,12 @@ public final class KitConfig {
     public static final ModConfigSpec.DoubleValue DECOY_COST, TERRAIN_COST, TERRAIN_COST_PER_BLOCK;
     public static final ModConfigSpec.IntValue DECOY_SECONDS, TERRAIN_SECONDS, TERRAIN_MAX_BLOCKS;
 
+    public static final ModConfigSpec.DoubleValue TOGGLE_HIT_COST, ANVIL_BONUS_BASE, ANVIL_BONUS_PER_RANK, TOGGLE_BONUS;
+    public static final ModConfigSpec.DoubleValue MOVE_PRIMARY_COST, MOVE_SECONDARY_COST;
+    public static final ModConfigSpec.DoubleValue FLAME_ARROW_DAMAGE, FLAME_ROUND_DAMAGE, FIST_BASE_DAMAGE;
+    public static final ModConfigSpec.DoubleValue STORM_DECAY_DAMAGE, SUN_FIST_HEAL, SUN_MELEE_HEAL, SKY_ALLY_REGEN;
+    public static final ModConfigSpec.DoubleValue LIGHTNING_ARMOR_TOUGHNESS, LIGHTNING_ARMOR_TOUGHNESS_PER_RANK;
+
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         RANK_DAMAGE_SCALING = b.comment("Ability damage grows by this share per effective rank above E.")
@@ -120,6 +126,24 @@ public final class KitConfig {
         TERRAIN_COST_PER_BLOCK = b.defineInRange("phantomTerrainCostPerBlock", 0.005, 0.0, 1.0);
         TERRAIN_SECONDS = b.defineInRange("phantomTerrainSeconds", 10, 1, 600);
         TERRAIN_MAX_BLOCKS = b.defineInRange("phantomTerrainMaxBlocks", 8, 1, 64);
+        b.pop();
+
+        b.push("infusion");
+        TOGGLE_HIT_COST = b.comment("Share of capacity each hit or shot costs while the Infuse toggle is on.").defineInRange("toggleHitCost", 0.0025, 0.0, 1.0);
+        ANVIL_BONUS_BASE = b.comment("Extra damage on an anvil-infused weapon's normal hits at E.").defineInRange("anvilDamageBonusBase", 0.10, 0.0, 10.0);
+        ANVIL_BONUS_PER_RANK = b.defineInRange("anvilDamageBonusPerRank", 0.05, 0.0, 10.0);
+        TOGGLE_BONUS = b.comment("Extra damage on normal hits with the Infuse toggle.").defineInRange("toggleDamageBonus", 0.05, 0.0, 10.0);
+        MOVE_PRIMARY_COST = b.comment("Cost of an infused weapon's Primary move.").defineInRange("primaryMoveCost", 0.03, 0.0, 1.0);
+        MOVE_SECONDARY_COST = b.comment("Cost of an infused weapon's Secondary move.").defineInRange("secondaryMoveCost", 0.05, 0.0, 1.0);
+        FLAME_ARROW_DAMAGE = b.defineInRange("flameArrowDamage", 6.0, 0.0, 1000.0);
+        FLAME_ROUND_DAMAGE = b.defineInRange("flameRoundDamage", 5.0, 0.0, 1000.0);
+        FIST_BASE_DAMAGE = b.comment("Flame punch damage before rank scaling.").defineInRange("fistBaseDamage", 4.0, 0.0, 1000.0);
+        STORM_DECAY_DAMAGE = b.comment("Armor-ignoring damage per second of Storm's decay (3 s) on infused melee hits.").defineInRange("stormDecayDamage", 1.0, 0.0, 100.0);
+        SUN_FIST_HEAL = b.comment("Share of damage healed by Sun-infused punches.").defineInRange("sunFistHeal", 0.10, 0.0, 10.0);
+        SUN_MELEE_HEAL = b.comment("Share of damage healed by other Sun-infused melee hits.").defineInRange("sunMeleeHeal", 0.05, 0.0, 10.0);
+        SKY_ALLY_REGEN = b.comment("Share of capacity restored to allied players within 6 blocks when a Sky-infused hit lands.").defineInRange("skyAllyRegen", 0.01, 0.0, 1.0);
+        LIGHTNING_ARMOR_TOUGHNESS = b.comment("Armor toughness per Lightning-infused armor piece at E.").defineInRange("lightningArmorToughness", 0.5, 0.0, 100.0);
+        LIGHTNING_ARMOR_TOUGHNESS_PER_RANK = b.defineInRange("lightningArmorToughnessPerRank", 0.1, 0.0, 100.0);
         b.pop();
 
         SPEC = b.build();

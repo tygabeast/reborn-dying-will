@@ -31,6 +31,7 @@ public final class ClientEvents {
         hold(ClientSetup.SIGNATURE, ActionPayload.Action.SIGNATURE, 2);
         send(ClientSetup.HYPER, ActionPayload.Action.HYPER);
         send(ClientSetup.RELEASE, ActionPayload.Action.RELEASE);
+        send(ClientSetup.INFUSE, ActionPayload.Action.INFUSE);
         while (ClientSetup.TOGGLE_PANEL.consumeClick()) {
             var show = com.reborndw.config.ClientConfig.PANEL_SHOW;
             show.set(!show.get());
@@ -85,6 +86,17 @@ public final class ClientEvents {
 
     private static void send(KeyMapping key, ActionPayload.Action action) {
         while (key.consumeClick()) PacketDistributor.sendToServer(new ActionPayload(action));
+    }
+
+    /** Infused items say what they carry. */
+    @SubscribeEvent
+    public static void tooltip(net.neoforged.neoforge.event.entity.player.ItemTooltipEvent event) {
+        var inf = event.getItemStack().get(com.reborndw.registry.ModRegistry.INFUSION.get());
+        if (inf == null) return;
+        var name = net.minecraft.network.chat.Component.translatable(inf.flame().translationKey()).withColor(inf.flame().color);
+        event.getToolTip().add(1, net.minecraft.network.chat.Component.translatable("tooltip.reborn_dying_will.infused", name, inf.grade().name()));
+        event.getToolTip().add(2, net.minecraft.network.chat.Component.translatable("tooltip.reborn_dying_will.infused_note", name)
+                .withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
     }
 
     @SubscribeEvent

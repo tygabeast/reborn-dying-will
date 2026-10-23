@@ -1,0 +1,25 @@
+{
+  "type": "reborn_dying_will:ranked_shaped",
+  "category": "misc",
+  "min_gem_rank": "d",
+  "pattern": [
+    "BBB",
+    " G ",
+    "III"
+  ],
+  "key": {
+    "B": {
+      "tag": "c:storage_blocks/iron"
+    },
+    "G": {
+      "item": "reborn_dying_will:flame_gem"
+    },
+    "I": {
+      "tag": "c:ingots/iron"
+    }
+  },
+  "result": {
+    "id": "reborn_dying_will:infusion_anvil",
+    "count": 1
+  }
+}

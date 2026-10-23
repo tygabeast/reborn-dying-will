@@ -21,21 +21,28 @@ public final class AbilityHandler {
         if (!d.awakened || d.active == null || player.isSpectator()) return;
         FlameKit kit = Kits.get(d.active);
         if (!pressed) {
-            if (kit != null) kit.onRelease(player, d, action);
+            if (!WeaponMoves.release(player, d, action) && kit != null) kit.onRelease(player, d, action);
             if (d.heldAction == action) d.heldAction = null;
             return;
         }
         switch (action) {
             case HYPER -> FlameLogic.toggleHyper(player);
             case RELEASE -> FlameLogic.release(player);
+            case INFUSE -> toggleInfuse(player, d);
             case SIGNATURE -> player.displayClientMessage(Component.translatable("message.reborn_dying_will.signature_needs_gear"), true);
             case PRIMARY, SECONDARY -> {
+                if (kit != null && kit.beforeGate(player, d, action)) return;
+                // the held infused weapon comes first, then the ring's innate kit
+                var weapon = com.reborndw.infusion.InfusionHelper.source(player);
+                if (weapon != null) {
+                    WeaponMoves.use(player, d, weapon, action);
+                    return;
+                }
                 if (kit == null) {
                     player.displayClientMessage(Component.translatable("message.reborn_dying_will.kit_not_ready",
                             Component.translatable(d.active.translationKey()).withColor(d.active.color)), true);
                     return;
                 }
-                if (kit.beforeGate(player, d, action)) return;
                 Rank need = action == ActionPayload.Action.PRIMARY ? kit.primaryRank() : kit.secondaryRank();
                 Rank eff = RingHelper.effectiveRank(player);
                 d.cachedRank = eff;
@@ -52,6 +59,21 @@ public final class AbilityHandler {
                 else kit.secondary(player, d, eff);
             }
         }
+    }
+
+    /** The Infuse key: lend your active flame to whatever you hold. Needs a ring to switch on. */
+    private static void toggleInfuse(ServerPlayer player, FlameData d) {
+        if (!d.infuseToggle && !RingHelper.hasRing(player)) {
+            player.displayClientMessage(Component.translatable("message.reborn_dying_will.needs_ring",
+                    Component.translatable(d.active.translationKey()).withColor(d.active.color)), true);
+            return;
+        }
+        d.infuseToggle = !d.infuseToggle;
+        d.markDirty();
+        player.displayClientMessage(Component.translatable(d.infuseToggle ? "message.reborn_dying_will.infuse_on" : "message.reborn_dying_will.infuse_off",
+                Component.translatable(d.active.translationKey()).withColor(d.active.color)), true);
+        player.level().playSound(null, player.blockPosition(), d.infuseToggle ? net.minecraft.sounds.SoundEvents.FIRECHARGE_USE
+                : net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH, net.minecraft.sounds.SoundSource.PLAYERS, 0.5F, 1.5F);
     }
 
     /** Per-tick upkeep for the active flame's kit; also tells the previous kit when the flame changed. */
@@ -72,6 +94,7 @@ public final class AbilityHandler {
             d.cachedHasRing = ring;
             d.rankRefresh = 10;
         }
+        WeaponMoves.tick(player, d);
         FlameKit kit = Kits.get(d.active);
         if (kit != null) kit.tick(player, d, d.cachedRank);
     }

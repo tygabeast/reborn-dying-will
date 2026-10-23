@@ -78,14 +78,23 @@ public final class FlameDamage {
             current = prev;
         }
         if (!hit) return false;
+        onHit(attacker, target, flame, amount, eff, flags, 1, 1.0);
+        return true;
+    }
+
+    /**
+     * A flame's property on a hit that already landed (ability damage, or an infused weapon's hit).
+     * {@code stacks} is how many Tranquility stacks Rain adds; {@code chanceMult} scales Cloud's echo and Mist's confuse.
+     */
+    public static void onHit(ServerPlayer attacker, LivingEntity target, Flame flame, float amount, Rank eff, int flags,
+                             int stacks, double chanceMult) {
         switch (flame) {
-            case RAIN -> Tranquility.addStacks(target, eff, 1);
+            case RAIN -> Tranquility.addStacks(target, eff, stacks);
             case LIGHTNING -> { if ((flags & NO_CHAIN) == 0) chain(attacker, target, amount, eff); }
-            case CLOUD -> { if ((flags & NO_ECHO) == 0) maybeEcho(attacker, target, amount, eff); }
-            case MIST -> maybeConfuse(attacker, target, eff);
+            case CLOUD -> { if ((flags & NO_ECHO) == 0) maybeEcho(attacker, target, amount, eff, chanceMult); }
+            case MIST -> maybeConfuse(attacker, target, eff, chanceMult);
             default -> {}
         }
-        return true;
     }
 
     /** Lightning: the hit jumps to nearby enemies, one at E, two from C, three from A. */
@@ -121,8 +130,8 @@ public final class FlameDamage {
     }
 
     /** Cloud: a chance for the hit to repeat a moment later at half damage. Echoes don't echo. */
-    private static void maybeEcho(ServerPlayer attacker, LivingEntity target, float amount, Rank eff) {
-        double chance = KitConfig.ECHO_BASE.get() + KitConfig.ECHO_PER_RANK.get() * eff.ordinal();
+    private static void maybeEcho(ServerPlayer attacker, LivingEntity target, float amount, Rank eff, double mult) {
+        double chance = (KitConfig.ECHO_BASE.get() + KitConfig.ECHO_PER_RANK.get() * eff.ordinal()) * mult;
         if (attacker.getRandom().nextDouble() >= chance) return;
         DelayedTasks.schedule(5, () -> {
             if (!target.isAlive() || attacker.isRemoved()) return;
@@ -134,8 +143,8 @@ public final class FlameDamage {
     }
 
     /** Mist: a chance to confuse. A mob turns on the nearest other creature; a player gets Nausea. */
-    private static void maybeConfuse(ServerPlayer attacker, LivingEntity target, Rank eff) {
-        double chance = KitConfig.CONFUSE_BASE.get() + KitConfig.CONFUSE_PER_RANK.get() * eff.ordinal();
+    private static void maybeConfuse(ServerPlayer attacker, LivingEntity target, Rank eff, double mult) {
+        double chance = (KitConfig.CONFUSE_BASE.get() + KitConfig.CONFUSE_PER_RANK.get() * eff.ordinal()) * mult;
         if (attacker.getRandom().nextDouble() >= chance) return;
         confuse(attacker, target);
     }

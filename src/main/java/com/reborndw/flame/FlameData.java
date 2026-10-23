@@ -36,6 +36,7 @@ public class FlameData implements INBTSerializable<CompoundTag> {
     public double ultimateTierSeconds;
     public int activityTicks;
 
+    public boolean infuseToggle;
     public boolean shieldActive;
     public double shieldHp;
 
@@ -48,6 +49,9 @@ public class FlameData implements INBTSerializable<CompoundTag> {
     public transient com.reborndw.network.ActionPayload.Action heldAction;
     public transient int holdTicks;
     public transient int parryTicks;
+    // weapon move state
+    public transient int counterTicks, braceTicks, chargeTicks;
+    public transient com.reborndw.infusion.WeaponCategory chargeCategory;
     public transient int cloudSpreadTicks;
     public transient double healPerTick;
     public transient int healTicks;
@@ -97,6 +101,7 @@ public class FlameData implements INBTSerializable<CompoundTag> {
         t.putDouble("ultimateTier", ultimateTierSeconds);
         t.putInt("activity", activityTicks);
         t.putBoolean("shield", shieldActive);
+        t.putBoolean("infuse", infuseToggle);
         t.putDouble("shieldHp", shieldHp);
         return t;
     }
@@ -131,6 +136,7 @@ public class FlameData implements INBTSerializable<CompoundTag> {
         ultimateTierSeconds = t.getDouble("ultimateTier");
         activityTicks = t.getInt("activity");
         shieldActive = t.getBoolean("shield");
+        infuseToggle = t.getBoolean("infuse");
         shieldHp = t.getDouble("shieldHp");
         dirty = true;
     }

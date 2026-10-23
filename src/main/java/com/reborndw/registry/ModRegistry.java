@@ -72,6 +72,8 @@ public final class ModRegistry {
     // data components
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<GemData>> GEM = COMPONENTS.registerComponentType("gem",
             b -> b.persistent(GemData.CODEC).networkSynchronized(GemData.STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.reborndw.infusion.Infusion>> INFUSION = COMPONENTS.registerComponentType("infusion",
+            b -> b.persistent(com.reborndw.infusion.Infusion.CODEC).networkSynchronized(com.reborndw.infusion.Infusion.STREAM_CODEC));
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<RingData>> RING = COMPONENTS.registerComponentType("ring",
             b -> b.persistent(RingData.CODEC).networkSynchronized(RingData.STREAM_CODEC));
 
@@ -90,6 +92,9 @@ public final class ModRegistry {
     public static final DeferredBlock<RingForgeBlock> RING_FORGE = BLOCKS.register("ring_forge",
             () -> new RingForgeBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL)
                     .requiresCorrectToolForDrops().strength(5.0F, 6.0F).sound(SoundType.ANVIL)));
+    public static final DeferredBlock<com.reborndw.block.InfusionAnvilBlock> INFUSION_ANVIL = BLOCKS.register("infusion_anvil",
+            () -> new com.reborndw.block.InfusionAnvilBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL)
+                    .requiresCorrectToolForDrops().strength(5.0F, 1200.0F).sound(SoundType.ANVIL).noOcclusion()));
     public static final DeferredBlock<PhantomBlock> PHANTOM_BLOCK = BLOCKS.register("phantom_block",
             () -> new PhantomBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE)
                     .strength(0.6F, 1.0F).sound(SoundType.AMETHYST).noOcclusion().noLootTable()
@@ -104,6 +109,7 @@ public final class ModRegistry {
     public static final DeferredItem<BlockItem> DEEPSLATE_FLAME_GEM_ORE_ITEM = ITEMS.registerSimpleBlockItem(DEEPSLATE_FLAME_GEM_ORE);
     public static final DeferredItem<BlockItem> BASIC_RESONATOR_ITEM = ITEMS.registerSimpleBlockItem(BASIC_RESONATOR);
     public static final DeferredItem<BlockItem> RING_FORGE_ITEM = ITEMS.registerSimpleBlockItem(RING_FORGE);
+    public static final DeferredItem<BlockItem> INFUSION_ANVIL_ITEM = ITEMS.registerSimpleBlockItem(INFUSION_ANVIL);
     public static final DeferredItem<FlameGemItem> FLAME_GEM = ITEMS.register("flame_gem",
             () -> new FlameGemItem(new Item.Properties().component(GEM.get(), GemData.EMPTY)));
     public static final DeferredItem<DyingWillPillItem> DYING_WILL_PILL = ITEMS.register("dying_will_pill",
@@ -162,6 +168,11 @@ public final class ModRegistry {
                     .addAttributeModifier(Attributes.JUMP_STRENGTH, RebornDW.id("stunned_jump"), -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
     public static final DeferredHolder<MobEffect, MobEffect> CONFUSED = EFFECTS.register("confused",
             () -> new SimpleEffect(MobEffectCategory.HARMFUL, Flame.MIST.color));
+    public static final DeferredHolder<MobEffect, MobEffect> ROOTED = EFFECTS.register("rooted",
+            () -> new SimpleEffect(MobEffectCategory.HARMFUL, 0x5A8A3A)
+                    .addAttributeModifier(Attributes.MOVEMENT_SPEED, RebornDW.id("rooted_speed"), -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+                    .addAttributeModifier(Attributes.JUMP_STRENGTH, RebornDW.id("rooted_jump"), -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+    public static final DeferredHolder<MobEffect, MobEffect> DECAY = EFFECTS.register("decay", () -> new com.reborndw.effect.DecayEffect(Flame.STORM.color));
     public static final DeferredHolder<MobEffect, MobEffect> ULTIMATE_DYING_WILL = EFFECTS.register("ultimate_dying_will", () -> new com.reborndw.effect.FormEffect(0xFFF0A0));
 
     // recipes
@@ -171,6 +182,8 @@ public final class ModRegistry {
     // menus
     public static final Supplier<MenuType<RingForgeMenu>> RING_FORGE_MENU = MENUS.register("ring_forge",
             () -> new MenuType<>(RingForgeMenu::new, FeatureFlags.DEFAULT_FLAGS));
+    public static final Supplier<MenuType<com.reborndw.menu.InfusionAnvilMenu>> INFUSION_ANVIL_MENU = MENUS.register("infusion_anvil",
+            () -> new MenuType<>(com.reborndw.menu.InfusionAnvilMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     // creative tab
     public static final Supplier<CreativeModeTab> TAB = TABS.register("main", () -> CreativeModeTab.builder()
@@ -182,6 +195,7 @@ public final class ModRegistry {
                 out.accept(FLAME_GEM.get());
                 out.accept(BASIC_RESONATOR_ITEM.get());
                 out.accept(RING_FORGE_ITEM.get());
+                out.accept(INFUSION_ANVIL_ITEM.get());
                 out.accept(DYING_WILL_PILL.get());
                 for (Flame f : Flame.SKY_SET) out.accept(FLAME_PILLS.get(f).get());
                 out.accept(DYING_WILL_BULLET.get());

@@ -1,9 +1,10 @@
-# Reborn - Dying Will (0.2.1)
+# Reborn - Dying Will (0.3.0)
 
 NeoForge 21.1 / Minecraft 1.21.1. Requires Curios (9.x for 1.21.1).
 
 Milestone 1 laid the foundation: the flame system, the Dying Will form ladder, Flame Gems, the basic resonator
-and Sky's ring kit. Milestone 2 (0.2.0) adds the other six Sky-set flames' ring kits, the Ring Forge and flame pills.
+and Sky's ring kit. Milestone 2 (0.2.0) added the other six Sky-set flames' ring kits, the Ring Forge and flame pills.
+Milestone 3 (0.3.0) adds flame infusion: the Infuse toggle, the Infusion Anvil and infused weapon moves.
 Every number is a placeholder in the server config files `reborn_dying_will-server.toml` and `reborn_dying_will-kits.toml`.
 
 ## What's in it
@@ -111,8 +112,48 @@ Every number is a placeholder in the server config files `reborn_dying_will-serv
 Not yet: each flame's infusion effects, signatures and S-rank abilities (they need infused weapons or Gear), Storm-infused
 tools mining faster, Cloud-infused tools' extra drops, and flame bullets.
 
+## Flame infusion
+**Two ways to infuse**
+- Infuse toggle (G): lends your active flame to whatever is in your main hand (bare fists too) while a ring of that flame
+  is worn. 70% strength, rank = your ring's effective rank, and each hit or shot costs 0.25% of capacity (it switches
+  off when the pool runs dry).
+- Infusion Anvil (crafted: 3 iron blocks over a D-rank gem over 3 iron ingots): a weapon, bow, crossbow, gun or shield
+  plus a ranked, attuned gem = the item permanently infused with that flame at that rank (the gem is used up; infusing
+  again replaces it). Armor takes only Lightning. Works while its flame is your active flame, at the lower of your rank
+  and the gem's rank. Infused items glow and say what they carry.
+
+**Weapon categories** (item tags `reborn_dying_will:infusion/<category>`, so packs can sort other mods' weapons; untagged
+swords, axes, maces, tridents, bows, crossbows and shields are recognised anyway). An infused weapon's moves take the
+Primary and Secondary keys ahead of the ring kit. Primary needs D and costs 3%; Secondary needs C and costs 5%.
+
+| Category | Primary | Secondary |
+| --- | --- | --- |
+| Blade | Flame Slash: arc in front, radius 4 | Counter Stance: the next melee hit within 1 s is turned back at 1.5x |
+| Heavy | Ground Slam: radius 3, knocks up | Overhead Strike: hold to charge (1.5 s), release for 1.5x to 3x |
+| Polearm | Piercing Thrust: everything on a 6-block line | Sweeping Spin: radius 3.5 with knockback |
+| Short | Strike Flurry: four quick hits | Dash Strike: dash 5 blocks, hitting what's in the way |
+| Whip | Lash: pulls the target to you | Bind: roots the target (Cloud: spreads to a second enemy) |
+| Bow | Flame Arrow: no ammunition | Spread Shot: five arrows |
+| Gun | Flame Round: no ammunition | Burst Fire: three rounds |
+| Shield | Brace: 2 s blocking frontal hits, sending projectiles back | Charging Bash (Lightning: chains to every enemy nearby) |
+| Fists | Flame Punch | Charged Punch: hold to charge |
+
+All move damage is flame damage, so each flame's property rides on it. Storm's shots fly 50% further and faster; Sun's
+are small and quick, and Sun's fists hit 25% harder.
+
+**Infused normal hits and shots**: normal hits deal +10% damage plus 5% per rank (toggle +5%) and carry the flame:
+Storm melee leaves 3 s of armor-ignoring decay; Storm shots get +50% speed and one more pierce. Rain adds a Tranquility
+stack (blades two). Sun heals you for 5% of the damage (fists 10%, with extra knockback); Sun shots are faster with an
+irregular kick. Lightning hits chain; Lightning shields send blocked projectiles back; Lightning armor adds toughness.
+Cloud hits can echo (short weapons twice as often); Cloud shots split in two at 60% damage after about 10 blocks.
+Mist hits can confuse (polearms twice as often); Mist shots fly with a harmless illusory twin. Sky hits knock back
+harder and restore 1% of capacity to allied players within 6 blocks.
+
+Not yet: signatures (X-Burner, Disintegration Beam, Downpour, Maximum Cannon, Lightning Bulwark, Cloud Multiplication,
+Illusion Realm, Hallucination), gloves, Storm/Cloud-infused tools' mining effects.
+
 ## Keys (rebindable, "Reborn - Dying Will" category)
-Z Primary, X Secondary, C Signature, H Hyper, V Release, Y choose flame, J toggle the ability panel.
+Z Primary, X Secondary, C Signature, H Hyper, V Release, Y choose flame, G Infuse, J toggle the ability panel.
 
 ## Display (client config: config/reborn_dying_will-client.toml, or Mods > Reborn - Dying Will > Config)
 - Ability panel: the active flame's passive and abilities with their current keys; anything you can't use yet is greyed
@@ -143,7 +184,7 @@ Z Primary, X Secondary, C Signature, H Hyper, V Release, Y choose flame, J toggl
 - Dying Will Pistol: 3 iron ingots over 1 planks (left).
 
 ## Not in this version
-Infusion and the Infusion Anvil, signatures, gloves, Box Workbench, level 2/3 resonators, canon weapons, chameleon,
+Signatures, gloves, Box Workbench, level 2/3 resonators, canon weapons, chameleon,
 boxes, Gear, Earth/Night unlock routes and kits, Vindice, combination flames, machines.
 Placeholder textures throughout.
 
