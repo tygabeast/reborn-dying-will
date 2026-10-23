@@ -65,7 +65,11 @@ public final class AbilityHandler {
         }
         if (!d.awakened || d.active == null) return;
         if (--d.rankRefresh <= 0) {
-            d.cachedRank = RingHelper.effectiveRank(player);
+            Rank eff = RingHelper.effectiveRank(player);
+            boolean ring = RingHelper.hasRing(player);
+            if (eff != d.cachedRank || ring != d.cachedHasRing) d.markDirty(); // the HUD's ability panel shows these
+            d.cachedRank = eff;
+            d.cachedHasRing = ring;
             d.rankRefresh = 10;
         }
         FlameKit kit = Kits.get(d.active);

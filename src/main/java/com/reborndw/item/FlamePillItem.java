@@ -4,6 +4,8 @@ import com.reborndw.config.ServerConfig;
 import com.reborndw.flame.Flame;
 import com.reborndw.flame.FlameData;
 import com.reborndw.flame.FlameLogic;
+import com.reborndw.flame.Form;
+import com.reborndw.util.DelayedTasks;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -45,8 +47,20 @@ public class FlamePillItem extends DyingWillPillItem {
         FlameLogic.unlock(sp, flame);
         sp.displayClientMessage(Component.translatable("message.reborn_dying_will.flame_unlocked", name()).withStyle(ChatFormatting.GOLD), false);
         level.playSound(null, sp.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8F, 0.7F);
-        FlameLogic.tryDyingWillEntry(sp, true); // the pill still does what a pill does, if it can
-        FlameLogic.syncNow(sp);
+        if (d.form == Form.NONE) {
+            // the newly awakened flame takes over, with a full pool, and the Dying Will that follows is in its colour
+            d.active = flame;
+            d.pool = d.usableCapacity(flame);
+            d.shieldActive = false;
+            d.markDirty();
+            FlameLogic.syncNow(sp);
+            DelayedTasks.schedule(1, () -> {
+                if (sp.isAlive() && FlameLogic.get(sp).active == flame) FlameLogic.tryDyingWillEntry(sp, true);
+            });
+        } else {
+            sp.displayClientMessage(Component.translatable("message.reborn_dying_will.flame_pill_in_form", name()), true);
+            FlameLogic.syncNow(sp);
+        }
         if (!sp.getAbilities().instabuild) stack.shrink(1);
         return stack;
     }

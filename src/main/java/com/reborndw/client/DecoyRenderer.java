@@ -20,6 +20,7 @@ public class DecoyRenderer extends HumanoidMobRenderer<MistDecoyEntity, PlayerMo
                 new HumanoidArmorModel<>(ctx.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)),
                 new HumanoidArmorModel<>(ctx.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR)),
                 ctx.getModelManager()));
+        addLayer(new DecoyCuriosLayer(this));
     }
 
     @Override

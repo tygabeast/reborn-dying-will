@@ -26,6 +26,7 @@ public final class ClientSetup {
     public static final KeyMapping HYPER = key("hyper", GLFW.GLFW_KEY_H);
     public static final KeyMapping SWITCH_FLAME = key("switch_flame", GLFW.GLFW_KEY_Y);
     public static final KeyMapping RELEASE = key("release", GLFW.GLFW_KEY_V);
+    public static final KeyMapping TOGGLE_PANEL = key("toggle_panel", GLFW.GLFW_KEY_J);
 
     private ClientSetup() {}
 
@@ -41,11 +42,13 @@ public final class ClientSetup {
         event.register(HYPER);
         event.register(SWITCH_FLAME);
         event.register(RELEASE);
+        event.register(TOGGLE_PANEL);
     }
 
     @SubscribeEvent
     public static void gui(RegisterGuiLayersEvent event) {
         event.registerAbove(VanillaGuiLayers.HOTBAR, RebornDW.id("flame_meter"), new FlameHud());
+        event.registerAbove(VanillaGuiLayers.HOTBAR, RebornDW.id("ability_panel"), new AbilityPanel());
     }
 
     @SubscribeEvent

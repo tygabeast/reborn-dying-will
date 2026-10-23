@@ -20,6 +20,7 @@ public class RebornDW {
         bus.addListener(ModRegistry::attributes);
         container.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
         container.registerConfig(ModConfig.Type.SERVER, com.reborndw.config.KitConfig.SPEC, MODID + "-kits.toml");
+        if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) com.reborndw.client.ClientInit.init(container);
     }
 
     public static ResourceLocation id(String path) {

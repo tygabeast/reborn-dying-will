@@ -292,7 +292,7 @@ public class KitGameTests {
         h.succeed();
     }
 
-    @GameTest(template = "test_floor")
+    @GameTest(template = "test_floor", timeoutTicks = 40)
     public static void flamePillUnlocksAtLowHealth(GameTestHelper h) {
         ServerPlayer p = FlameGameTests.player(h);
         FlameLogic.unlock(p, Flame.SKY);
@@ -304,7 +304,11 @@ public class KitGameTests {
         pill.finishUsingItem(h.getLevel(), p);
         check(h, d.unlocked.contains(Flame.STORM), "at low health the Storm Flame awakens");
         check(h, pill.isEmpty(), "and the pill is used");
-        p.discard();
-        h.succeed();
+        check(h, d.active == Flame.STORM && d.pool > 0, "the new flame becomes active, with a full pool");
+        h.runAfterDelay(3, () -> {
+            check(h, d.form == com.reborndw.flame.Form.DYING_WILL && d.active == Flame.STORM, "then Dying Will starts in the new flame");
+            p.discard();
+            h.succeed();
+        });
     }
 }

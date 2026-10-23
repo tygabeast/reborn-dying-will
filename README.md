@@ -1,4 +1,4 @@
-# Reborn - Dying Will (0.2.0)
+# Reborn - Dying Will (0.2.1)
 
 NeoForge 21.1 / Minecraft 1.21.1. Requires Curios (9.x for 1.21.1).
 
@@ -21,8 +21,8 @@ Every number is a placeholder in the server config files `reborn_dying_will-serv
 - Near death: lethal damage to an unawakened player leaves them at half a heart in Dying Will and reveals
   their natural flame (fixed by UUID). Not for /kill or the void.
 - Dying Will Pill: the first one only works at low health. After that, any health.
-- Flame pills (one per Sky-set flame): an awakened player at low health who eats one awakens that flame too
-  (and enters Dying Will if they can). At higher health nothing happens and the pill isn't used.
+- Flame pills (one per Sky-set flame): an awakened player at low health who eats one awakens that flame, switches
+  to it with a full pool, and a tick later enters Dying Will in it (if not already in a form). At higher health nothing happens and the pill isn't used.
   Recipe: Dying Will Pill + Sky gold ingot, Storm blaze powder, Rain prismarine crystals, Sun glistering melon slice,
   Lightning lightning rod, Cloud phantom membrane, Mist fermented spider eye.
 - Dying Will Pistol + Bullets: a hit player enters Dying Will, awakening them at any health (PvP behind a config option).
@@ -112,7 +112,13 @@ Not yet: each flame's infusion effects, signatures and S-rank abilities (they ne
 tools mining faster, Cloud-infused tools' extra drops, and flame bullets.
 
 ## Keys (rebindable, "Reborn - Dying Will" category)
-Z Primary, X Secondary, C Signature, H Hyper, V Release, Y choose flame.
+Z Primary, X Secondary, C Signature, H Hyper, V Release, Y choose flame, J toggle the ability panel.
+
+## Display (client config: config/reborn_dying_will-client.toml, or Mods > Reborn - Dying Will > Config)
+- Ability panel: the active flame's passive and abilities with their current keys; anything you can't use yet is greyed
+  out with the reason (no ring, or the rank it needs). Show/hide, position (8 anchors), offsets, scale, background.
+- Flame meter: position (8 anchors), offsets, horizontal or vertical, length, thickness, labels on/off.
+- Mist decoys show the caster's visible Curios (any mod's), including cosmetic slots.
 
 ## Testing commands (op level 2)
 ```

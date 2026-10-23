@@ -31,6 +31,11 @@ public final class ClientEvents {
         hold(ClientSetup.SIGNATURE, ActionPayload.Action.SIGNATURE, 2);
         send(ClientSetup.HYPER, ActionPayload.Action.HYPER);
         send(ClientSetup.RELEASE, ActionPayload.Action.RELEASE);
+        while (ClientSetup.TOGGLE_PANEL.consumeClick()) {
+            var show = com.reborndw.config.ClientConfig.PANEL_SHOW;
+            show.set(!show.get());
+            show.save();
+        }
         FlameData own = ClientFlameCache.get(mc.player.getId());
         while (ClientSetup.SWITCH_FLAME.consumeClick()) {
             if (own != null && own.awakened && mc.screen == null) mc.setScreen(new FlameSelectScreen());

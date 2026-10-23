@@ -53,6 +53,11 @@ public class FlameData implements INBTSerializable<CompoundTag> {
     public transient int healTicks;
     public transient Flame kitFlame;
     public transient Rank cachedRank = Rank.E;
+    public transient boolean cachedHasRing;
+    // filled on clients from the sync packet (the server's view, which uses the server's rank thresholds)
+    public transient Rank syncedRank = Rank.E;
+    public transient Rank syncedEffRank = Rank.E;
+    public transient boolean syncedHasRing;
     public transient int rankRefresh;
 
     public void markDirty() { dirty = true; }

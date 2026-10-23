@@ -18,7 +18,12 @@ public record FlameSyncPayload(int entityId, CompoundTag data) implements Custom
             FlameSyncPayload::new);
 
     public static FlameSyncPayload of(Player player, FlameData d) {
-        return new FlameSyncPayload(player.getId(), d.serializeNBT(player.registryAccess()));
+        net.minecraft.nbt.CompoundTag tag = d.serializeNBT(player.registryAccess());
+        // display extras for the HUD: rank by the server's thresholds, effective rank and whether a ring is worn
+        tag.putInt("syncRank", d.active == null ? 0 : com.reborndw.flame.FlameLogic.rank(d, d.active).ordinal());
+        tag.putInt("syncEffRank", d.cachedRank.ordinal());
+        tag.putBoolean("syncHasRing", d.cachedHasRing);
+        return new FlameSyncPayload(player.getId(), tag);
     }
 
     @Override
