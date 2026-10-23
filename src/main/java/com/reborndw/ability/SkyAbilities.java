@@ -23,32 +23,29 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 /** Sky's innate ring kit: Harmony (passive), Flame Burst and Sky Shield. */
-public final class SkyAbilities {
+public final class SkyAbilities implements FlameKit {
+    public static final SkyAbilities KIT = new SkyAbilities();
+
     private SkyAbilities() {}
 
-    public static final Rank FLAME_BURST_RANK = Rank.D;
-    public static final Rank SKY_SHIELD_RANK = Rank.C;
+    @Override public Rank primaryRank() { return Rank.D; }
+    @Override public Rank secondaryRank() { return Rank.C; }
 
-    public static void use(ServerPlayer player, ActionPayload.Action action) {
-        Rank eff = RingHelper.effectiveRank(player);
-        switch (action) {
-            case PRIMARY -> {
-                if (!RingHelper.hasRing(player) || !eff.atLeast(FLAME_BURST_RANK)) { needRank(player, FLAME_BURST_RANK); return; }
-                flameBurst(player, eff);
-            }
-            case SECONDARY -> {
-                FlameData d = FlameLogic.get(player);
-                if (d.shieldActive) { d.shieldActive = false; d.shieldHp = 0; d.markDirty(); return; }
-                if (!RingHelper.hasRing(player) || !eff.atLeast(SKY_SHIELD_RANK)) { needRank(player, SKY_SHIELD_RANK); return; }
-                skyShield(player, eff);
-            }
-            case SIGNATURE -> player.displayClientMessage(Component.translatable("message.reborn_dying_will.signature_needs_gear"), true);
-            default -> {}
+    @Override
+    public boolean beforeGate(ServerPlayer player, FlameData d, ActionPayload.Action action) {
+        if (action == ActionPayload.Action.SECONDARY && d.shieldActive) { // switching the shield off needs no ring
+            d.shieldActive = false; d.shieldHp = 0; d.markDirty();
+            return true;
         }
+        return false;
     }
 
-    private static void needRank(ServerPlayer player, Rank rank) {
-        player.displayClientMessage(Component.translatable("message.reborn_dying_will.needs_rank", rank.name()), true);
+    @Override public void primary(ServerPlayer player, FlameData d, Rank eff) { flameBurst(player, eff); }
+    @Override public void secondary(ServerPlayer player, FlameData d, Rank eff) { skyShield(player, eff); }
+
+    @Override
+    public void onDeactivate(ServerPlayer player, FlameData d) {
+        if (d.shieldActive) { d.shieldActive = false; d.shieldHp = 0; d.markDirty(); }
     }
 
     private static void noFlame(ServerPlayer player) {
@@ -61,10 +58,10 @@ public final class SkyAbilities {
         double radius = ServerConfig.FLAME_BURST_RADIUS.get();
         Vec3 look = player.getLookAngle();
         Vec3 center = player.getEyePosition().add(look.scale(radius));
-        float damage = (float) (ServerConfig.FLAME_BURST_DAMAGE.get() * (1 + 0.25 * eff.ordinal()));
+        float damage = FlameDamage.scaled(ServerConfig.FLAME_BURST_DAMAGE.get(), eff);
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new AABB(center, center).inflate(radius),
                 e -> e != player && e.isAlive() && e.distanceToSqr(center) <= radius * radius && !isAlly(player, e))) {
-            e.hurt(level.damageSources().playerAttack(player), damage);
+            FlameDamage.deal(player, e, Flame.SKY, damage, eff, 0);
             Vec3 push = e.position().subtract(player.position()).normalize().scale(0.9);
             e.push(push.x, 0.35, push.z);
             e.hurtMarked = true;
@@ -91,10 +88,11 @@ public final class SkyAbilities {
         player.level().playSound(null, player.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.8F, 1.6F);
     }
 
-    /** Called every tick for players with Sky active. */
-    public static void tick(ServerPlayer player, FlameData d) {
+    /** Every tick while Sky is active. */
+    @Override
+    public void tick(ServerPlayer player, FlameData d, Rank eff) {
         if (d.shieldActive) {
-            if (player.tickCount % 20 == 0 && !FlameLogic.spendFraction(player, ServerConfig.SKY_SHIELD_UPKEEP.get())) {
+            if (player.tickCount % 20 == 0 && !FlameLogic.spendFraction(player, ServerConfig.SKY_SHIELD_UPKEEP.get() * Kits.upkeepFactor(player))) {
                 d.shieldActive = false; d.shieldHp = 0; d.markDirty();
             } else if (player.tickCount % 6 == 0) {
                 // a few motes on a ring around the body, kept below the eyes

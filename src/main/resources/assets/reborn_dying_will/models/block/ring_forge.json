@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "reborn_dying_will:block/ring_forge_top",
+    "side": "reborn_dying_will:block/ring_forge_side",
+    "bottom": "reborn_dying_will:block/ring_forge_bottom"
+  }
+}

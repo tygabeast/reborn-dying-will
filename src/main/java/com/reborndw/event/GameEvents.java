@@ -1,6 +1,7 @@
 package com.reborndw.event;
 
 import com.reborndw.RebornDW;
+import com.reborndw.ability.AbilityHandler;
 import com.reborndw.ability.SkyAbilities;
 import com.reborndw.command.RebornCommands;
 import com.reborndw.config.ServerConfig;
@@ -30,9 +31,7 @@ public final class GameEvents {
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         FlameLogic.tick(player);
-        FlameData d = FlameLogic.get(player);
-        if (d.active == Flame.SKY) SkyAbilities.tick(player, d);
-        else if (d.shieldActive) { d.shieldActive = false; d.markDirty(); }
+        AbilityHandler.tick(player, FlameLogic.get(player));
     }
 
     /** Near-death awakening: lethal damage to an unawakened player awakens their natural flame instead. */
@@ -71,7 +70,9 @@ public final class GameEvents {
         FlameData d = FlameLogic.get(player);
         if (!d.shieldActive || d.shieldHp <= 0 || event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return;
         float amount = event.getAmount();
-        double absorbed = Math.min(amount, d.shieldHp);
+        // Storm passes through other flames' shields at half strength: only half of it can be absorbed
+        float absorbable = com.reborndw.ability.FlameDamage.current() == Flame.STORM ? amount * 0.5F : amount;
+        double absorbed = Math.min(absorbable, d.shieldHp);
         d.shieldHp -= absorbed;
         event.setAmount((float) (amount - absorbed));
         if (d.shieldHp <= 0) { d.shieldActive = false; d.shieldHp = 0; }

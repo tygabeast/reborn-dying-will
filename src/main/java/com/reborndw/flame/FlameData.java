@@ -44,6 +44,16 @@ public class FlameData implements INBTSerializable<CompoundTag> {
     public transient int restingTicks;
     public transient double lastX, lastY, lastZ;
     public transient int syncCooldown;
+    // ring kit state (server only, not saved)
+    public transient com.reborndw.network.ActionPayload.Action heldAction;
+    public transient int holdTicks;
+    public transient int parryTicks;
+    public transient int cloudSpreadTicks;
+    public transient double healPerTick;
+    public transient int healTicks;
+    public transient Flame kitFlame;
+    public transient Rank cachedRank = Rank.E;
+    public transient int rankRefresh;
 
     public void markDirty() { dirty = true; }
 

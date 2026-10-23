@@ -1,0 +1,25 @@
+{
+  "type": "reborn_dying_will:ranked_shaped",
+  "category": "misc",
+  "min_gem_rank": "e",
+  "pattern": [
+    "III",
+    "IGI",
+    "SSS"
+  ],
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "G": {
+      "item": "reborn_dying_will:flame_gem"
+    },
+    "S": {
+      "item": "minecraft:smooth_stone"
+    }
+  },
+  "result": {
+    "id": "reborn_dying_will:ring_forge",
+    "count": 1
+  }
+}

@@ -51,7 +51,14 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void renderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModRegistry.DYING_WILL_BULLET_ENTITY.get(), ThrownItemRenderer::new);
+        event.registerEntityRenderer(ModRegistry.FLAME_SHOT.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
+        event.registerEntityRenderer(ModRegistry.MIST_DECOY.get(), DecoyRenderer::new);
         event.registerBlockEntityRenderer(ModRegistry.RESONATOR_BE.get(), ResonatorRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void screens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
+        event.register(ModRegistry.RING_FORGE_MENU.get(), RingForgeScreen::new);
     }
 
     /** Gems and the gems set in rings take their flame's colour. */
@@ -67,5 +74,10 @@ public final class ClientSetup {
             RingData r = stack.get(ModRegistry.RING.get());
             return r == null ? 0xFFD8D8D8 : 0xFF000000 | r.flame().color;
         }, ModRegistry.FLAME_RING.get(), ModRegistry.CHAINED_FLAME_RING.get());
+        // flame pills: the inner half takes the flame's colour
+        for (var entry : ModRegistry.FLAME_PILLS.entrySet()) {
+            int color = 0xFF000000 | entry.getKey().color;
+            event.register((stack, layer) -> layer == 1 ? color : -1, entry.getValue().get());
+        }
     }
 }

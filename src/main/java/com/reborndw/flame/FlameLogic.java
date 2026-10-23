@@ -432,6 +432,7 @@ public final class FlameLogic {
             case HYPER -> {
                 if (!player.hasEffect(ModRegistry.HYPER_DYING_WILL)) { endHyper(player, d); break; }
                 double drain = Mth.lerp(masteryFraction(d), ServerConfig.HYPER_DRAIN_START.get(), ServerConfig.HYPER_DRAIN_MAX.get());
+                if (player.hasEffect(ModRegistry.CALMED)) drain *= 2; // Rain's calm: active flame runs out twice as fast
                 d.pool -= cap * drain / 20.0;
                 if (d.activityTicks > 0) {
                     double total = masteryTotal();
@@ -476,6 +477,7 @@ public final class FlameLogic {
         if (d.form != Form.HYPER && d.pool < cap) {
             double rate = d.restingTicks >= ServerConfig.RESTING_DELAY.get() * 20
                     ? ServerConfig.POOL_REGEN_RESTING.get() : ServerConfig.POOL_REGEN.get();
+            if (d.active == Flame.LIGHTNING && player.level().isThundering()) rate *= 2; // Lightning loves a storm
             d.pool = Math.min(cap, d.pool + cap * rate / 20.0);
             if (player.tickCount % 10 == 0) d.markDirty();
         }

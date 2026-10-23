@@ -26,9 +26,9 @@ public final class ClientEvents {
     public static void tick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
-        send(ClientSetup.PRIMARY, ActionPayload.Action.PRIMARY);
-        send(ClientSetup.SECONDARY, ActionPayload.Action.SECONDARY);
-        send(ClientSetup.SIGNATURE, ActionPayload.Action.SIGNATURE);
+        hold(ClientSetup.PRIMARY, ActionPayload.Action.PRIMARY, 0);
+        hold(ClientSetup.SECONDARY, ActionPayload.Action.SECONDARY, 1);
+        hold(ClientSetup.SIGNATURE, ActionPayload.Action.SIGNATURE, 2);
         send(ClientSetup.HYPER, ActionPayload.Action.HYPER);
         send(ClientSetup.RELEASE, ActionPayload.Action.RELEASE);
         FlameData own = ClientFlameCache.get(mc.player.getId());
@@ -58,6 +58,23 @@ public final class ClientEvents {
             }
             if (d.form != Form.DYING_WILL && p.tickCount % 3 == 0)
                 mc.level.addParticle(ParticleTypes.SMALL_FLAME, p.getX() + fx, y + 0.1, p.getZ() + fz, 0, 0.02, 0);
+        }
+    }
+
+    private static final boolean[] HELD = new boolean[3];
+
+    /** Ability keys report both press and release, so held abilities (Calm Field) know when to stop. */
+    private static void hold(KeyMapping key, ActionPayload.Action action, int index) {
+        boolean clicked = false;
+        while (key.consumeClick()) clicked = true;
+        boolean down = key.isDown() && Minecraft.getInstance().screen == null;
+        if ((down || clicked) && !HELD[index]) {
+            PacketDistributor.sendToServer(new ActionPayload(action, true));
+            HELD[index] = true;
+        }
+        if (!down && HELD[index]) {
+            PacketDistributor.sendToServer(new ActionPayload(action, false));
+            HELD[index] = false;
         }
     }
 

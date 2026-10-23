@@ -42,14 +42,14 @@ import net.neoforged.neoforge.common.EffectCures;
 @GameTestHolder(RebornDW.MODID)
 @PrefixGameTestTemplate(false)
 public class FlameGameTests {
-    private static ServerPlayer player(GameTestHelper h) {
+    static ServerPlayer player(GameTestHelper h) {
         ServerPlayer p = new TestPlayer(h.getLevel());
         p.setGameMode(GameType.SURVIVAL);
         p.moveTo(Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(2, 1, 2))));
         return p;
     }
 
-    private static void check(GameTestHelper h, boolean ok, String msg) {
+    static void check(GameTestHelper h, boolean ok, String msg) {
         if (!ok) h.fail(msg);
     }
 
@@ -219,20 +219,36 @@ public class FlameGameTests {
     }
 
     @GameTest(template = "test_floor")
-    public static void ringCrafting(GameTestHelper h) {
+    public static void ringForgeMakesRings(GameTestHelper h) {
+        ItemStack iron = new ItemStack(Items.IRON_INGOT, 4);
+        ItemStack gemC = FlameGemItem.create(Flame.SKY, Rank.GEM_FV[Rank.C.ordinal()]);
+        var r = com.reborndw.menu.RingForgeLogic.result(iron, gemC, ItemStack.EMPTY);
+        RingData data = r.output().get(ModRegistry.RING.get());
+        check(h, r.output().is(ModRegistry.FLAME_RING.get()) && data != null && data.flame() == Flame.SKY && data.grade() == Rank.C,
+                "4 iron + C gem = C-grade Sky ring");
+        check(h, r.metal() == 4 && r.gem() == 1 && r.chain() == 0, "uses 4 iron and the gem");
+        check(h, com.reborndw.menu.RingForgeLogic.result(new ItemStack(Items.IRON_INGOT, 3), gemC, ItemStack.EMPTY).output().isEmpty(),
+                "3 iron is not enough");
+        check(h, com.reborndw.menu.RingForgeLogic.result(iron, FlameGemItem.create(null, 0), ItemStack.EMPTY).output().isEmpty(),
+                "unattuned gem makes nothing");
+        check(h, com.reborndw.menu.RingForgeLogic.result(iron, FlameGemItem.create(Flame.SKY, 500), ItemStack.EMPTY).output().isEmpty(),
+                "unranked gem makes nothing");
+        var chained = com.reborndw.menu.RingForgeLogic.result(iron, gemC, new ItemStack(Items.CHAIN));
+        check(h, chained.output().is(ModRegistry.CHAINED_FLAME_RING.get()) && chained.chain() == 1, "with a chain it comes out chained");
+        var rechain = com.reborndw.menu.RingForgeLogic.result(r.output(), ItemStack.EMPTY, new ItemStack(Items.CHAIN));
+        check(h, rechain.output().is(ModRegistry.CHAINED_FLAME_RING.get()), "a finished ring + chain = chained ring");
+        var legacy = com.reborndw.menu.RingForgeLogic.result(new ItemStack(ModRegistry.BLANK_RING.get()), gemC, ItemStack.EMPTY);
+        check(h, legacy.output().is(ModRegistry.FLAME_RING.get()) && legacy.metal() == 1, "old blank rings still work");
+
+        // the forge itself needs an E-rank gem
         var level = h.getLevel();
-        CraftingInput in = CraftingInput.of(2, 1, List.of(new ItemStack(ModRegistry.BLANK_RING.get()),
-                FlameGemItem.create(Flame.SKY, Rank.GEM_FV[Rank.C.ordinal()])));
-        var match = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, in, level);
-        check(h, match.isPresent(), "blank ring + C gem should match");
-        ItemStack out = match.get().value().assemble(in, level.registryAccess());
-        RingData r = out.get(ModRegistry.RING.get());
-        check(h, r != null && r.flame() == Flame.SKY && r.grade() == Rank.C, "ring should be a C-grade Sky ring");
-        CraftingInput bad = CraftingInput.of(2, 1, List.of(new ItemStack(ModRegistry.BLANK_RING.get()), FlameGemItem.create(null, 0)));
-        check(h, level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, bad, level).isEmpty(), "unattuned gem should not make a ring");
-        CraftingInput chain = CraftingInput.of(2, 1, List.of(out, new ItemStack(Items.CHAIN)));
-        var chained = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, chain, level);
-        check(h, chained.isPresent() && chained.get().value().assemble(chain, level.registryAccess()).is(ModRegistry.CHAINED_FLAME_RING.get()), "ring + chain = chained ring");
+        ItemStack i = new ItemStack(Items.IRON_INGOT), st = new ItemStack(Items.SMOOTH_STONE);
+        CraftingInput good = CraftingInput.of(3, 3, List.of(i, i, i, i, FlameGemItem.create(Flame.RAIN, 1000), i, st, st, st));
+        var match = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, good, level);
+        check(h, match.isPresent() && match.get().value().assemble(good, level.registryAccess()).is(ModRegistry.RING_FORGE_ITEM.get()),
+                "iron, an E gem and smooth stone make the Ring Forge");
+        CraftingInput bad = CraftingInput.of(3, 3, List.of(i, i, i, i, FlameGemItem.create(Flame.RAIN, 999), i, st, st, st));
+        check(h, level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, bad, level).isEmpty(), "an unranked gem won't do");
         h.succeed();
     }
 

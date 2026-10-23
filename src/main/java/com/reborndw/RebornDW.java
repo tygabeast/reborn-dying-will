@@ -12,11 +12,14 @@ import net.neoforged.fml.config.ModConfig;
 @Mod(RebornDW.MODID)
 public class RebornDW {
     public static final String MODID = "reborn_dying_will";
+    public static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
 
     public RebornDW(IEventBus bus, ModContainer container) {
         ModRegistry.register(bus);
         bus.addListener(ModNetwork::register);
+        bus.addListener(ModRegistry::attributes);
         container.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
+        container.registerConfig(ModConfig.Type.SERVER, com.reborndw.config.KitConfig.SPEC, MODID + "-kits.toml");
     }
 
     public static ResourceLocation id(String path) {
