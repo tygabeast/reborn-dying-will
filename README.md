@@ -1,4 +1,4 @@
-# Reborn - Dying Will (0.1.0, first milestone)
+# Reborn - Dying Will (0.1.1, first milestone)
 
 NeoForge 21.1 / Minecraft 1.21.1. Requires Curios (9.x for 1.21.1).
 
@@ -14,7 +14,7 @@ and the Sky Flame's ring kit. Every number is a placeholder in `serverconfig/reb
   (4% of FV spent times the rank factor, x1.5 below 30% health or in a Dying Will form).
 - Pool regenerates 0.5%/s, 1.5%/s after standing still for 3 seconds.
 - Death scars every unlocked flame by 3% (cap 15%); scar heals as you spend flame (5 FV per 1 FV of scar).
-- Switching flames: 30 s cooldown, empties the pool, not allowed during a form.
+- Switching flames: press Y to open the flame selection screen and pick one. 30 s cooldown, empties the pool, not allowed during a form.
 
 **Awakening**
 - Near death: lethal damage to an unawakened player leaves them at half a heart in Dying Will and reveals
@@ -26,13 +26,17 @@ and the Sky Flame's ring kit. Every number is a placeholder in `serverconfig/reb
 **Forms**
 - Dying Will: 30 s, +5 to 10 s per entry, capped at 3 min; boost 1.5x plus 0.05x per rank above E
   (attack, speed, mining speed, knockback resistance); entering restores 10% of the pool.
-  Ends in weakness (-30% attack, -20% speed): 60 s, -3 to 5 s per entry, floor 3 s. Entering while weak
-  pauses the weakness and adds the next one on top. 20 s shared cooldown between pills/bullets.
+  Ends in the vanilla Weakness effect (level set in config, default I): 60 s, -3 to 5 s per entry, floor 3 s.
+  Entering while weak pauses the weakness and adds the next one on top. Milk doesn't clear it.
+  20 s shared cooldown between pills/bullets.
+- Each form is a status effect (Dying Will, Hyper Dying Will, Ultimate Dying Will) with its icon and timer in the
+  inventory and top-right; the effect's timer is the form's timer. No swirl particles.
+- Release key (V) ends your current form early; the weakness still follows. Can be turned off in config.
 - Hyper Dying Will: unlocks when Dying Will reaches its cap. Hotkey toggle. Drains 1%/s (0.4%/s at full mastery),
   ends with fatigue. Mastery: 10 tiers of 600 x tier seconds, earned only while active (10 s after spending
   flame or dealing/taking damage). Boost 2.0x + 0.05x per tier + rank bonus.
 - Ultimate Dying Will: after mastery is full, an extra tier of the same length. Then a pill or bullet during Hyper
-  enters Ultimate: 3 min, flame costs nothing, 5x boost, then 1 hour of weakness and the extra tier resets.
+  enters Ultimate: 3 min, flame costs nothing, 5x boost, then 1 hour of Weakness II and the extra tier resets.
 - A forehead flame in the active flame's colour shows on anyone in a form (other players see it too).
 
 **Gems and resonator**
@@ -59,7 +63,7 @@ The Ring Forge isn't built yet, so for now:
 - Sky Shield (Secondary, ring, C): toggle, 5% + 1%/s, absorbs 2 hearts at C plus 2 per rank above.
 
 ## Keys (rebindable, "Reborn - Dying Will" category)
-Z Primary, X Secondary, C Signature, H Hyper, Y switch flame.
+Z Primary, X Secondary, C Signature, H Hyper, V Release, Y choose flame.
 
 ## Testing commands (op level 2)
 ```
@@ -73,6 +77,8 @@ Z Primary, X Secondary, C Signature, H Hyper, Y switch flame.
 /reborn scar clear <player>
 /reborn weakness clear <player> | set <player> <seconds>
 /reborn cooldowns clear <player>
+/reborn form end <player>     (as if it ran out: weakness follows)
+/reborn form clear <player>   (ends it with no weakness)
 /reborn givegem <player> <flame> <rank>
 ```
 

@@ -93,9 +93,17 @@ public final class RebornCommands {
         root.then(Commands.literal("scar").then(Commands.literal("clear").then(player()
                 .executes(c -> editPlayer(c, p -> Arrays.fill(FlameLogic.get(p).scar, 0))))));
         root.then(Commands.literal("weakness")
-                .then(Commands.literal("clear").then(player().executes(c -> editPlayer(c, p -> FlameLogic.get(p).weaknessTicks = 0))))
+                .then(Commands.literal("clear").then(player().executes(c -> editPlayer(c, p -> FlameLogic.clearWeakness(p, FlameLogic.get(p))))))
                 .then(Commands.literal("set").then(player().then(Commands.argument("seconds", IntegerArgumentType.integer(0))
-                        .executes(c -> editPlayer(c, p -> FlameLogic.get(p).weaknessTicks = IntegerArgumentType.getInteger(c, "seconds") * 20))))));
+                        .executes(c -> editPlayer(c, p -> {
+                            FlameData data = FlameLogic.get(p);
+                            FlameLogic.clearWeakness(p, data);
+                            FlameLogic.applyWeakness(p, data, IntegerArgumentType.getInteger(c, "seconds") * 20, ServerConfig.WEAKNESS_LEVEL.get());
+                        }))))));
+        // end a form: "end" is the same as it running out (weakness follows), "clear" ends it with no weakness
+        root.then(Commands.literal("form")
+                .then(Commands.literal("end").then(player().executes(c -> editPlayer(c, p -> FlameLogic.endForm(p, true)))))
+                .then(Commands.literal("clear").then(player().executes(c -> editPlayer(c, p -> FlameLogic.endForm(p, false))))));
         root.then(Commands.literal("cooldowns").then(Commands.literal("clear").then(player().executes(c -> editPlayer(c, p -> {
             FlameData data = FlameLogic.get(p);
             data.sharedCooldownTicks = 0;

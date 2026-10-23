@@ -16,7 +16,7 @@ public final class AbilityHandler {
         if (!d.awakened || d.active == null || player.isSpectator()) return;
         switch (action) {
             case HYPER -> FlameLogic.toggleHyper(player);
-            case SWITCH_FLAME -> FlameLogic.cycleFlame(player);
+            case RELEASE -> FlameLogic.release(player);
             case PRIMARY, SECONDARY, SIGNATURE -> {
                 if (d.active == Flame.SKY) SkyAbilities.use(player, action);
                 else player.displayClientMessage(Component.translatable("message.reborn_dying_will.kit_not_ready",

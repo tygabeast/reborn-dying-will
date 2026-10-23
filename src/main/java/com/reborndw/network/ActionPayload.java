@@ -8,7 +8,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 /** Client to server: a hotkey was pressed. */
 public record ActionPayload(Action action) implements CustomPacketPayload {
-    public enum Action { PRIMARY, SECONDARY, SIGNATURE, HYPER, SWITCH_FLAME }
+    public enum Action { PRIMARY, SECONDARY, SIGNATURE, HYPER, RELEASE }
 
     public static final Type<ActionPayload> TYPE = new Type<>(RebornDW.id("action"));
     public static final StreamCodec<ByteBuf, ActionPayload> CODEC =

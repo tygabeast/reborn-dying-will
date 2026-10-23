@@ -26,7 +26,10 @@ public class FlameData implements INBTSerializable<CompoundTag> {
     public boolean hyperUnlocked;
     public Form form = Form.NONE;
     public int formTicks;
-    public int weaknessTicks;
+    /** Our weakness that was paused by entering a form; added to the next weakness. */
+    public int pausedWeaknessTicks;
+    /** True while the vanilla Weakness on this player is ours (so milk can't clear it). */
+    public boolean ownWeakness;
     public int sharedCooldownTicks;
     public int switchCooldownTicks;
     public double masterySeconds;
@@ -71,7 +74,8 @@ public class FlameData implements INBTSerializable<CompoundTag> {
         t.putBoolean("hyperUnlocked", hyperUnlocked);
         t.putString("form", form.name());
         t.putInt("formTicks", formTicks);
-        t.putInt("weaknessTicks", weaknessTicks);
+        t.putInt("pausedWeakness", pausedWeaknessTicks);
+        t.putBoolean("ownWeakness", ownWeakness);
         t.putInt("sharedCooldown", sharedCooldownTicks);
         t.putInt("switchCooldown", switchCooldownTicks);
         t.putDouble("mastery", masterySeconds);
@@ -104,7 +108,8 @@ public class FlameData implements INBTSerializable<CompoundTag> {
         hyperUnlocked = t.getBoolean("hyperUnlocked");
         try { form = Form.valueOf(t.getString("form")); } catch (IllegalArgumentException e) { form = Form.NONE; }
         formTicks = t.getInt("formTicks");
-        weaknessTicks = t.getInt("weaknessTicks");
+        pausedWeaknessTicks = t.getInt("pausedWeakness");
+        ownWeakness = t.getBoolean("ownWeakness");
         sharedCooldownTicks = t.getInt("sharedCooldown");
         switchCooldownTicks = t.getInt("switchCooldown");
         masterySeconds = t.getDouble("mastery");

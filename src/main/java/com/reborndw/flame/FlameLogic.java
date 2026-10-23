@@ -12,6 +12,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -23,7 +26,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public final class FlameLogic {
     public static final ResourceLocation BOOST_ID = RebornDW.id("form_boost");
     public static final ResourceLocation BOOST_KB_ID = RebornDW.id("form_boost_knockback");
-    public static final ResourceLocation WEAKNESS_ID = RebornDW.id("weakness");
 
     private FlameLogic() {}
 
@@ -208,6 +210,8 @@ public final class FlameLogic {
         d.dwEntries++;
         d.form = Form.DYING_WILL;
         d.formTicks = (int) Math.round(d.dwMaxSeconds * 20);
+        pauseWeakness(player, d);
+        player.addEffect(formEffect(ModRegistry.DYING_WILL, d.formTicks));
         d.pool = Math.min(activeCapacity(d), d.pool + activeCapacity(d) * ServerConfig.ENTRY_POOL_RECOVERY.get());
         d.activityTicks = ServerConfig.ACTIVITY_WINDOW.get() * 20;
         if (!d.hyperUnlocked && d.dwMaxSeconds >= cap) {
@@ -240,6 +244,8 @@ public final class FlameLogic {
         }
         d.form = Form.HYPER;
         d.formTicks = 0;
+        pauseWeakness(player, d);
+        player.addEffect(formEffect(ModRegistry.HYPER_DYING_WILL, MobEffectInstance.INFINITE_DURATION));
         player.level().playSound(null, player.blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.8F, 0.7F);
         d.markDirty();
         syncNow(player);
@@ -249,15 +255,100 @@ public final class FlameLogic {
         double m = masteryFraction(d);
         double fatigue = Mth.lerp(m, ServerConfig.HYPER_FATIGUE_START.get(), ServerConfig.HYPER_FATIGUE_MAX.get());
         d.form = Form.NONE;
-        d.weaknessTicks += (int) Math.round(fatigue * 20);
+        player.removeEffect(ModRegistry.HYPER_DYING_WILL);
+        applyWeakness(player, d, (int) Math.round(fatigue * 20), ServerConfig.WEAKNESS_LEVEL.get());
         d.markDirty();
         syncNow(player);
+    }
+
+    private static void endDyingWill(ServerPlayer player, FlameData d, boolean weakness) {
+        d.form = Form.NONE;
+        d.formTicks = 0;
+        player.removeEffect(ModRegistry.DYING_WILL);
+        if (weakness) applyWeakness(player, d, (int) Math.round(d.weaknessSeconds * 20), ServerConfig.WEAKNESS_LEVEL.get());
+        d.markDirty();
+        syncNow(player);
+    }
+
+    private static void endUltimate(ServerPlayer player, FlameData d, boolean weakness) {
+        d.form = Form.NONE;
+        d.formTicks = 0;
+        d.ultimateTierSeconds = 0;
+        player.removeEffect(ModRegistry.ULTIMATE_DYING_WILL);
+        if (weakness) applyWeakness(player, d, ServerConfig.ULTIMATE_WEAKNESS.get() * 20, ServerConfig.ULTIMATE_WEAKNESS_LEVEL.get());
+        d.markDirty();
+        syncNow(player);
+    }
+
+    /** Ends whatever form the player is in. With weakness, it's the same as the form running out. */
+    public static void endForm(ServerPlayer player, boolean weakness) {
+        FlameData d = get(player);
+        switch (d.form) {
+            case DYING_WILL -> endDyingWill(player, d, weakness);
+            case HYPER -> {
+                if (weakness) endHyper(player, d);
+                else { d.form = Form.NONE; player.removeEffect(ModRegistry.HYPER_DYING_WILL); d.markDirty(); syncNow(player); }
+            }
+            case ULTIMATE -> endUltimate(player, d, weakness);
+            case NONE -> {}
+        }
+        if (!weakness) clearWeakness(player, d);
+    }
+
+    /** The Release key: let go of the current form early. The weakness still follows. */
+    public static void release(ServerPlayer player) {
+        FlameData d = get(player);
+        if (d.form == Form.NONE) {
+            player.displayClientMessage(Component.translatable("message.reborn_dying_will.no_form"), true);
+            return;
+        }
+        if (!ServerConfig.ALLOW_RELEASE.get()) {
+            player.displayClientMessage(Component.translatable("message.reborn_dying_will.release_disabled"), true);
+            return;
+        }
+        endForm(player, true);
+        player.level().playSound(null, player.blockPosition(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.5F, 1.2F);
+        player.displayClientMessage(Component.translatable("message.reborn_dying_will.released"), true);
+    }
+
+    private static MobEffectInstance formEffect(Holder<MobEffect> effect, int ticks) {
+        // no swirl particles: the forehead flame already shows the form, and particles get in the way
+        return new MobEffectInstance(effect, ticks, 0, false, false, true);
+    }
+
+    /** Entering a form pauses our weakness; what's left is added to the next one. */
+    private static void pauseWeakness(ServerPlayer player, FlameData d) {
+        MobEffectInstance w = player.getEffect(MobEffects.WEAKNESS);
+        if (d.ownWeakness && w != null) {
+            d.pausedWeaknessTicks += w.getDuration();
+            d.ownWeakness = false;
+            player.removeEffect(MobEffects.WEAKNESS);
+        }
+    }
+
+    /** Gives the vanilla Weakness effect for the given time plus any paused weakness. */
+    public static void applyWeakness(ServerPlayer player, FlameData d, int ticks, int level) {
+        int total = Math.max(0, ticks) + d.pausedWeaknessTicks;
+        d.pausedWeaknessTicks = 0;
+        if (total <= 0) return;
+        d.ownWeakness = true;
+        player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, total, Math.max(0, level - 1), false, false, true));
+        d.markDirty();
+    }
+
+    public static void clearWeakness(ServerPlayer player, FlameData d) {
+        d.pausedWeaknessTicks = 0;
+        if (d.ownWeakness) player.removeEffect(MobEffects.WEAKNESS);
+        d.ownWeakness = false;
+        d.markDirty();
     }
 
     private static void enterUltimate(ServerPlayer player) {
         FlameData d = get(player);
         d.form = Form.ULTIMATE;
         d.formTicks = ServerConfig.ULTIMATE_DURATION.get() * 20;
+        player.removeEffect(ModRegistry.HYPER_DYING_WILL);
+        player.addEffect(formEffect(ModRegistry.ULTIMATE_DYING_WILL, d.formTicks));
         d.pool = activeCapacity(d);
         player.displayClientMessage(Component.translatable("message.reborn_dying_will.ultimate").withStyle(ChatFormatting.GOLD), false);
         player.level().playSound(null, player.blockPosition(), SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS, 0.6F, 1.6F);
@@ -310,7 +401,8 @@ public final class FlameLogic {
         }
         d.form = Form.NONE;
         d.formTicks = 0;
-        d.weaknessTicks = 0;
+        d.pausedWeaknessTicks = 0;
+        d.ownWeakness = false;
         d.shieldActive = false;
         d.pool = 0;
         d.markDirty();
@@ -332,14 +424,13 @@ public final class FlameLogic {
 
         switch (d.form) {
             case DYING_WILL -> {
-                if (--d.formTicks <= 0) {
-                    d.form = Form.NONE;
-                    d.weaknessTicks += (int) Math.round(d.weaknessSeconds * 20);
-                    d.markDirty();
-                    syncNow(player);
-                }
+                // the effect is the timer: when it runs out (or is cleared) the form ends
+                MobEffectInstance e = player.getEffect(ModRegistry.DYING_WILL);
+                if (e == null) endDyingWill(player, d, true);
+                else d.formTicks = e.getDuration();
             }
             case HYPER -> {
+                if (!player.hasEffect(ModRegistry.HYPER_DYING_WILL)) { endHyper(player, d); break; }
                 double drain = Mth.lerp(masteryFraction(d), ServerConfig.HYPER_DRAIN_START.get(), ServerConfig.HYPER_DRAIN_MAX.get());
                 d.pool -= cap * drain / 20.0;
                 if (d.activityTicks > 0) {
@@ -364,16 +455,16 @@ public final class FlameLogic {
             }
             case ULTIMATE -> {
                 d.pool = cap;
-                if (--d.formTicks <= 0) {
-                    d.form = Form.NONE;
-                    d.ultimateTierSeconds = 0;
-                    d.weaknessTicks += ServerConfig.ULTIMATE_WEAKNESS.get() * 20;
-                    d.markDirty();
-                    syncNow(player);
-                }
+                MobEffectInstance e = player.getEffect(ModRegistry.ULTIMATE_DYING_WILL);
+                if (e == null) endUltimate(player, d, true);
+                else d.formTicks = e.getDuration();
             }
             case NONE -> {
-                if (d.weaknessTicks > 0 && --d.weaknessTicks == 0) d.markDirty();
+                if (d.ownWeakness && !player.hasEffect(MobEffects.WEAKNESS)) { d.ownWeakness = false; d.markDirty(); }
+                // a form effect without the form (e.g. from /effect) does nothing, so tidy it away
+                if (player.hasEffect(ModRegistry.DYING_WILL)) player.removeEffect(ModRegistry.DYING_WILL);
+                if (player.hasEffect(ModRegistry.HYPER_DYING_WILL)) player.removeEffect(ModRegistry.HYPER_DYING_WILL);
+                if (player.hasEffect(ModRegistry.ULTIMATE_DYING_WILL)) player.removeEffect(ModRegistry.ULTIMATE_DYING_WILL);
             }
         }
 
@@ -396,13 +487,10 @@ public final class FlameLogic {
 
     public static void applyAttributes(ServerPlayer player, FlameData d) {
         double mult = d.awakened ? boostMultiplier(d) : 1.0;
-        boolean weak = d.form == Form.NONE && d.weaknessTicks > 0;
         setModifier(player, Attributes.ATTACK_DAMAGE, BOOST_ID, mult - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         setModifier(player, Attributes.MOVEMENT_SPEED, BOOST_ID, (mult - 1) * 0.5, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         setModifier(player, Attributes.BLOCK_BREAK_SPEED, BOOST_ID, mult - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         setModifier(player, Attributes.KNOCKBACK_RESISTANCE, BOOST_KB_ID, Math.min(0.8, (mult - 1) * 0.25), AttributeModifier.Operation.ADD_VALUE);
-        setModifier(player, Attributes.ATTACK_DAMAGE, WEAKNESS_ID, weak ? -ServerConfig.WEAKNESS_ATTACK.get() : 0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-        setModifier(player, Attributes.MOVEMENT_SPEED, WEAKNESS_ID, weak ? -ServerConfig.WEAKNESS_SPEED.get() : 0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 
     public static void setModifier(Player player, Holder<Attribute> attr, ResourceLocation id, double value, AttributeModifier.Operation op) {

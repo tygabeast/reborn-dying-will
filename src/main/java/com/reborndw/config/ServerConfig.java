@@ -24,8 +24,8 @@ public final class ServerConfig {
     public static final ModConfigSpec.DoubleValue ENTRY_POOL_RECOVERY;
     public static final ModConfigSpec.DoubleValue DW_BOOST;
     public static final ModConfigSpec.DoubleValue RANK_BONUS;
-    public static final ModConfigSpec.DoubleValue WEAKNESS_ATTACK;
-    public static final ModConfigSpec.DoubleValue WEAKNESS_SPEED;
+    public static final ModConfigSpec.IntValue WEAKNESS_LEVEL;
+    public static final ModConfigSpec.BooleanValue ALLOW_RELEASE;
 
     public static final ModConfigSpec.DoubleValue POOL_REGEN;
     public static final ModConfigSpec.DoubleValue POOL_REGEN_RESTING;
@@ -50,6 +50,7 @@ public final class ServerConfig {
     public static final ModConfigSpec.DoubleValue ULTIMATE_BOOST;
     public static final ModConfigSpec.IntValue ULTIMATE_DURATION;
     public static final ModConfigSpec.IntValue ULTIMATE_WEAKNESS;
+    public static final ModConfigSpec.IntValue ULTIMATE_WEAKNESS_LEVEL;
 
     public static final ModConfigSpec.BooleanValue SCAR_ENABLED;
     public static final ModConfigSpec.IntValue SCAR_PER_DEATH;
@@ -93,8 +94,10 @@ public final class ServerConfig {
         ENTRY_POOL_RECOVERY = b.comment("Share of capacity restored when entering.").defineInRange("entryPoolRecovery", 0.10, 0.0, 1.0);
         DW_BOOST = b.defineInRange("boostMultiplier", 1.5, 1.0, 10.0);
         RANK_BONUS = b.comment("Extra boost per rank above E.").defineInRange("rankBonusPerRank", 0.05, 0.0, 1.0);
-        WEAKNESS_ATTACK = b.defineInRange("weaknessAttackPenalty", 0.30, 0.0, 1.0);
-        WEAKNESS_SPEED = b.defineInRange("weaknessSpeedPenalty", 0.20, 0.0, 1.0);
+        WEAKNESS_LEVEL = b.comment("Level of the vanilla Weakness effect after Dying Will and Hyper (1 = Weakness I).")
+                .defineInRange("weaknessLevel", 1, 1, 10);
+        ALLOW_RELEASE = b.comment("Let players end their own form early with the Release key (the weakness still follows).")
+                .define("allowRelease", true);
         b.pop();
 
         b.push("pool");
@@ -130,6 +133,7 @@ public final class ServerConfig {
         ULTIMATE_BOOST = b.defineInRange("boostMultiplier", 5.0, 1.0, 50.0);
         ULTIMATE_DURATION = b.defineInRange("durationSeconds", 180, 1, 36000);
         ULTIMATE_WEAKNESS = b.defineInRange("weaknessSeconds", 3600, 0, 360000);
+        ULTIMATE_WEAKNESS_LEVEL = b.comment("Level of the vanilla Weakness effect after Ultimate.").defineInRange("weaknessLevel", 2, 1, 10);
         b.pop();
 
         b.push("scar");

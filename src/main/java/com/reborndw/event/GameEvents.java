@@ -56,6 +56,14 @@ public final class GameEvents {
         FlameLogic.onDeath(player);
     }
 
+    /** Milk (or any other cure) can't wash off the weakness a Dying Will form leaves behind. */
+    @SubscribeEvent
+    public static void onEffectRemove(net.neoforged.neoforge.event.entity.living.MobEffectEvent.Remove event) {
+        if (event.getCure() == null || !(event.getEntity() instanceof ServerPlayer player)) return;
+        if (event.getEffect().value() == net.minecraft.world.effect.MobEffects.WEAKNESS.value() && FlameLogic.get(player).ownWeakness)
+            event.setCanceled(true);
+    }
+
     /** Sky Shield absorbs damage before it reaches the player. */
     @SubscribeEvent
     public static void onIncomingDamage(LivingIncomingDamageEvent event) {

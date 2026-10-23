@@ -35,6 +35,8 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
+import net.minecraft.world.effect.MobEffects;
+import net.neoforged.neoforge.common.EffectCures;
 
 /** Server-side checks of the flame rules. Run with the gameTestServer Gradle task; not shipped in the jar. */
 @GameTestHolder(RebornDW.MODID)
@@ -106,13 +108,15 @@ public class FlameGameTests {
         FlameLogic.unlock(p, Flame.SKY);
         FlameLogic.enterDyingWill(p);
         FlameData d = FlameLogic.get(p);
-        d.formTicks = 1;
+        var dw = p.getEffect(ModRegistry.DYING_WILL);
+        check(h, dw != null && dw.getDuration() == d.formTicks, "Dying Will should be a status effect carrying the timer");
+        p.removeEffect(ModRegistry.DYING_WILL); // as if it ran out
         FlameLogic.tick(p);
-        check(h, d.form == Form.NONE && d.weaknessTicks > 0, "Dying Will should end in weakness");
-        var mod = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).getModifier(FlameLogic.WEAKNESS_ID);
-        FlameLogic.applyAttributes(p, d);
-        mod = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).getModifier(FlameLogic.WEAKNESS_ID);
-        check(h, mod != null && mod.amount() < 0, "weakness should lower attack");
+        var weak = p.getEffect(MobEffects.WEAKNESS);
+        check(h, d.form == Form.NONE && weak != null && d.ownWeakness, "Dying Will should end in vanilla Weakness");
+        check(h, Math.abs(weak.getDuration() - d.weaknessSeconds * 20) <= 1, "weakness should last the current weakness length");
+        p.removeEffectsCuredBy(EffectCures.MILK);
+        check(h, p.hasEffect(MobEffects.WEAKNESS), "milk must not clear Dying Will weakness");
         p.discard();
         h.succeed();
     }
@@ -130,7 +134,8 @@ public class FlameGameTests {
         FlameLogic.tick(p);
         check(h, d.pool < before, "Hyper should drain the pool");
         for (int i = 0; i < 2000 && d.form == Form.HYPER; i++) FlameLogic.tick(p);
-        check(h, d.form == Form.NONE && d.weaknessTicks > 0, "Hyper should end with fatigue when the pool runs dry");
+        check(h, d.form == Form.NONE && p.hasEffect(MobEffects.WEAKNESS) && !p.hasEffect(ModRegistry.HYPER_DYING_WILL),
+                "Hyper should end with fatigue when the pool runs dry");
         p.discard();
         h.succeed();
     }
@@ -169,10 +174,13 @@ public class FlameGameTests {
         check(h, FlameLogic.tryDyingWillEntry(p, true) == null, "pill in Hyper with a full tier enters Ultimate");
         check(h, d.form == Form.ULTIMATE, "should be Ultimate");
         check(h, FlameLogic.spend(p, 1e9, true), "Ultimate makes flame free");
-        d.formTicks = 1;
+        check(h, p.hasEffect(ModRegistry.ULTIMATE_DYING_WILL) && !p.hasEffect(ModRegistry.HYPER_DYING_WILL), "Ultimate replaces the Hyper effect");
+        p.removeEffect(ModRegistry.ULTIMATE_DYING_WILL);
         FlameLogic.tick(p);
         check(h, d.form == Form.NONE && d.ultimateTierSeconds == 0, "Ultimate resets the extra tier");
-        check(h, d.weaknessTicks >= ServerConfig.ULTIMATE_WEAKNESS.get() * 20, "Ultimate ends in long weakness");
+        var weak = p.getEffect(MobEffects.WEAKNESS);
+        check(h, weak != null && weak.getDuration() >= ServerConfig.ULTIMATE_WEAKNESS.get() * 20
+                && weak.getAmplifier() == ServerConfig.ULTIMATE_WEAKNESS_LEVEL.get() - 1, "Ultimate ends in long, stronger weakness");
         p.discard();
         h.succeed();
     }
@@ -280,6 +288,56 @@ public class FlameGameTests {
             p.discard();
             h.succeed();
         });
+    }
+
+    @GameTest(template = "test_floor")
+    public static void enteringWhileWeakPausesWeakness(GameTestHelper h) {
+        ServerPlayer p = player(h);
+        FlameLogic.unlock(p, Flame.SKY);
+        FlameData d = FlameLogic.get(p);
+        FlameLogic.applyWeakness(p, d, 200, 1);
+        FlameLogic.enterDyingWill(p);
+        check(h, !p.hasEffect(MobEffects.WEAKNESS) && d.pausedWeaknessTicks == 200, "entering a form pauses the weakness");
+        FlameLogic.endForm(p, true);
+        var weak = p.getEffect(MobEffects.WEAKNESS);
+        check(h, weak != null && weak.getDuration() == 200 + (int) Math.round(d.weaknessSeconds * 20),
+                "the paused weakness is added to the next one");
+        p.discard();
+        h.succeed();
+    }
+
+    @GameTest(template = "test_floor")
+    public static void releaseEndsFormWithWeakness(GameTestHelper h) {
+        ServerPlayer p = player(h);
+        FlameLogic.unlock(p, Flame.SKY);
+        FlameData d = FlameLogic.get(p);
+        FlameLogic.enterDyingWill(p);
+        AbilityHandler.handle(p, ActionPayload.Action.RELEASE);
+        check(h, d.form == Form.NONE && !p.hasEffect(ModRegistry.DYING_WILL) && p.hasEffect(MobEffects.WEAKNESS),
+                "Release ends Dying Will and the weakness follows");
+        d.hyperUnlocked = true;
+        d.pool = 50;
+        FlameLogic.toggleHyper(p);
+        FlameLogic.endForm(p, false);
+        check(h, d.form == Form.NONE && !p.hasEffect(MobEffects.WEAKNESS), "a clean end leaves no weakness");
+        p.discard();
+        h.succeed();
+    }
+
+    @GameTest(template = "test_floor")
+    public static void selectFlameSwitches(GameTestHelper h) {
+        ServerPlayer p = player(h);
+        FlameLogic.unlock(p, Flame.SKY);
+        FlameLogic.unlock(p, Flame.STORM);
+        FlameData d = FlameLogic.get(p);
+        d.active = Flame.SKY;
+        d.switchCooldownTicks = 0;
+        FlameLogic.switchFlame(p, Flame.STORM);
+        check(h, d.active == Flame.STORM && d.switchCooldownTicks > 0, "choosing a flame switches to it");
+        FlameLogic.switchFlame(p, Flame.SKY);
+        check(h, d.active == Flame.STORM, "the switch cooldown applies");
+        p.discard();
+        h.succeed();
     }
 
     @SuppressWarnings("unused")

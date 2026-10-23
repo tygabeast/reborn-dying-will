@@ -98,6 +98,9 @@ public final class ModRegistry {
 
     // effects
     public static final DeferredHolder<MobEffect, MobEffect> HARMONIZED = EFFECTS.register("harmonized", HarmonizedEffect::create);
+    public static final DeferredHolder<MobEffect, MobEffect> DYING_WILL = EFFECTS.register("dying_will", () -> new com.reborndw.effect.FormEffect(0xFF7A1A));
+    public static final DeferredHolder<MobEffect, MobEffect> HYPER_DYING_WILL = EFFECTS.register("hyper_dying_will", () -> new com.reborndw.effect.FormEffect(0xFFB030));
+    public static final DeferredHolder<MobEffect, MobEffect> ULTIMATE_DYING_WILL = EFFECTS.register("ultimate_dying_will", () -> new com.reborndw.effect.FormEffect(0xFFF0A0));
 
     // recipes
     public static final Supplier<RecipeSerializer<RingCraftingRecipe>> RING_CRAFTING = RECIPES.register("ring_crafting",

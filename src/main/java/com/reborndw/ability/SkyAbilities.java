@@ -70,12 +70,14 @@ public final class SkyAbilities {
             e.hurtMarked = true;
         }
         Vector3f c = rgb(Flame.SKY.color);
-        for (int i = 0; i < 40; i++) {
-            double t = i / 40.0 * radius * 2;
-            Vec3 p = player.getEyePosition().add(look.scale(t));
-            level.sendParticles(new DustParticleOptions(c, 1.6F), p.x, p.y, p.z, 3, 0.35, 0.35, 0.35, 0.02);
+        // the trail starts ahead of the caster and below eye level so it doesn't block their view
+        Vec3 origin = player.getEyePosition().add(0, -0.35, 0);
+        double start = 1.5, end = radius * 2;
+        for (int i = 0; i <= 20; i++) {
+            Vec3 p = origin.add(look.scale(start + (end - start) * i / 20.0));
+            level.sendParticles(new DustParticleOptions(c, 1.0F), p.x, p.y, p.z, 1, 0.12, 0.12, 0.12, 0.0);
         }
-        level.sendParticles(ParticleTypes.FLAME, center.x, center.y, center.z, 25, radius / 2, radius / 2, radius / 2, 0.05);
+        level.sendParticles(ParticleTypes.FLAME, center.x, center.y, center.z, 12, radius / 3, radius / 3, radius / 3, 0.02);
         level.playSound(null, player.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.0F, 1.2F);
     }
 
@@ -94,10 +96,15 @@ public final class SkyAbilities {
         if (d.shieldActive) {
             if (player.tickCount % 20 == 0 && !FlameLogic.spendFraction(player, ServerConfig.SKY_SHIELD_UPKEEP.get())) {
                 d.shieldActive = false; d.shieldHp = 0; d.markDirty();
-            } else if (player.tickCount % 4 == 0) {
+            } else if (player.tickCount % 6 == 0) {
+                // a few motes on a ring around the body, kept below the eyes
                 Vector3f c = rgb(Flame.SKY.color);
-                player.serverLevel().sendParticles(new DustParticleOptions(c, 1.0F),
-                        player.getX(), player.getY() + 1, player.getZ(), 4, 0.6, 0.8, 0.6, 0);
+                for (int i = 0; i < 3; i++) {
+                    double a = player.getRandom().nextDouble() * Math.PI * 2;
+                    player.serverLevel().sendParticles(new DustParticleOptions(c, 0.8F),
+                            player.getX() + Math.cos(a) * 0.9, player.getY() + 0.2 + player.getRandom().nextDouble() * 0.9,
+                            player.getZ() + Math.sin(a) * 0.9, 1, 0, 0, 0, 0);
+                }
             }
         }
         // Harmony: allies share part of your boost
@@ -108,7 +115,7 @@ public final class SkyAbilities {
             double r = ServerConfig.HARMONY_RADIUS.get();
             for (LivingEntity e : player.serverLevel().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(r),
                     e -> e != player && e.isAlive() && isAlly(player, e))) {
-                e.addEffect(new MobEffectInstance(ModRegistry.HARMONIZED, 50, Math.min(amp, 254), true, true, true));
+                e.addEffect(new MobEffectInstance(ModRegistry.HARMONIZED, 50, Math.min(amp, 254), true, false, true));
             }
         }
     }

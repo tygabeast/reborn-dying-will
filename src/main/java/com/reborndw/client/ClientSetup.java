@@ -25,6 +25,7 @@ public final class ClientSetup {
     public static final KeyMapping SIGNATURE = key("signature", GLFW.GLFW_KEY_C);
     public static final KeyMapping HYPER = key("hyper", GLFW.GLFW_KEY_H);
     public static final KeyMapping SWITCH_FLAME = key("switch_flame", GLFW.GLFW_KEY_Y);
+    public static final KeyMapping RELEASE = key("release", GLFW.GLFW_KEY_V);
 
     private ClientSetup() {}
 
@@ -39,6 +40,7 @@ public final class ClientSetup {
         event.register(SIGNATURE);
         event.register(HYPER);
         event.register(SWITCH_FLAME);
+        event.register(RELEASE);
     }
 
     @SubscribeEvent

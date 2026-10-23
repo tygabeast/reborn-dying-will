@@ -30,7 +30,16 @@ public final class ClientEvents {
         send(ClientSetup.SECONDARY, ActionPayload.Action.SECONDARY);
         send(ClientSetup.SIGNATURE, ActionPayload.Action.SIGNATURE);
         send(ClientSetup.HYPER, ActionPayload.Action.HYPER);
-        send(ClientSetup.SWITCH_FLAME, ActionPayload.Action.SWITCH_FLAME);
+        send(ClientSetup.RELEASE, ActionPayload.Action.RELEASE);
+        FlameData own = ClientFlameCache.get(mc.player.getId());
+        while (ClientSetup.SWITCH_FLAME.consumeClick()) {
+            if (own != null && own.awakened && mc.screen == null) mc.setScreen(new FlameSelectScreen());
+        }
+        // count cooldowns down between syncs so the selection screen stays accurate
+        if (own != null) {
+            if (own.switchCooldownTicks > 0) own.switchCooldownTicks--;
+            if (own.sharedCooldownTicks > 0) own.sharedCooldownTicks--;
+        }
 
         // the forehead flame, seen by everyone, in the active flame's colour
         if (mc.isPaused()) return;

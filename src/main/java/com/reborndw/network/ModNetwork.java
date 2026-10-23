@@ -17,5 +17,10 @@ public final class ModNetwork {
                 (payload, ctx) -> ctx.enqueueWork(() -> {
                     if (ctx.player() instanceof ServerPlayer sp) AbilityHandler.handle(sp, payload.action());
                 }));
+        r.playToServer(SelectFlamePayload.TYPE, SelectFlamePayload.CODEC,
+                (payload, ctx) -> ctx.enqueueWork(() -> {
+                    if (ctx.player() instanceof ServerPlayer sp && !sp.isSpectator())
+                        com.reborndw.flame.FlameLogic.switchFlame(sp, payload.flame());
+                }));
     }
 }
