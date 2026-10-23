@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "IGI",
+    "III"
+  ],
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "G": {
+      "item": "reborn_dying_will:flame_gem"
+    }
+  },
+  "result": {
+    "id": "reborn_dying_will:basic_resonator",
+    "count": 1
+  }
+}

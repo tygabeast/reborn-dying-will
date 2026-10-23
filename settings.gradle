@@ -1,0 +1,14 @@
+pluginManagement {
+    repositories {
+        maven { url = 'https://maven.neoforged.net/releases' }
+        maven { url = 'https://repo1.maven.org/maven2/' }
+        // offline stand-in for a plugin only used for IntelliJ project sync
+        maven { url = uri('/home/claude/stubrepo') }
+    }
+}
+dependencyResolutionManagement {
+    repositories {
+        maven { url = 'https://repo1.maven.org/maven2/' }
+    }
+}
+rootProject.name = 'reborn_dying_will'

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "reborn_dying_will:block/basic_resonator"
+    },
+    "lit=true": {
+      "model": "reborn_dying_will:block/basic_resonator"
+    }
+  }
+}

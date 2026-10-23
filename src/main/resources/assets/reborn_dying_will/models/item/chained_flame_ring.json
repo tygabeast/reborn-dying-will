@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "reborn_dying_will:item/chained_flame_ring",
+    "layer1": "reborn_dying_will:item/chained_flame_ring_gem"
+  }
+}
