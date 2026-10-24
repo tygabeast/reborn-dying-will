@@ -1,10 +1,10 @@
-# Reborn - Dying Will (0.3.2)
+# Reborn - Dying Will (0.3.3)
 
 NeoForge 21.1 / Minecraft 1.21.1. Requires Curios (9.x for 1.21.1).
 
 Milestone 1 laid the foundation: the flame system, the Dying Will form ladder, Flame Gems, the basic resonator
 and Sky's ring kit. Milestone 2 (0.2.0) added the other six Sky-set flames' ring kits, the Ring Forge and flame pills.
-0.3.2 reworks the in-game flame looks from 0.3.1 testing (below). Milestone 3 (0.3.0) added flame infusion: the Infuse toggle, the Infusion Anvil and infused weapon moves.
+0.3.3 adds a shader-pack mode for the flame looks reworked in 0.3.2 (below). Milestone 3 (0.3.0) added flame infusion: the Infuse toggle, the Infusion Anvil and infused weapon moves.
 Every number is a placeholder in the server config files `reborn_dying_will-server.toml` and `reborn_dying_will-kits.toml`.
 
 ## What's in it
@@ -163,6 +163,12 @@ Illusion Realm, Hallucination), gloves, Storm/Cloud-infused tools' mining effect
   green crackle web, Sun's a ray burst, Earth's a Y).
 - Client config "Flame looks": show on/off, particle density, size, raise, forward, script rings. The game's Particles
   setting also thins the motes. Players more than 64 blocks away are skipped.
+- Shader pack mode (AUTO / ALWAYS / NEVER): with an Iris shader pack on, AUTO draws flames, shots and script bands with
+  vanilla entity render types (the glow goes through the same program as spider eyes), which shader packs are written
+  to handle. ALWAYS/NEVER force one path so you can compare per pack.
+
+### 0.3.3 changes
+- Shader pack mode added (fixes banded flames under Complementary Reimagined/Unbound; untested here, needs Iris).
 
 ### 0.3.2 changes
 - Flame position: 0.08 lower than 0.3.1 (your tested offset, now the default) and pushed forward past helmets. The old

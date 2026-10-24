@@ -3,6 +3,7 @@ package com.reborndw.client.look;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 
 /**
@@ -17,8 +18,15 @@ public final class FlameMesh {
     private static final int WHITE = 0xFFFFFF;
     private static final int FULL = LightTexture.FULL_BRIGHT;
     private static float ox, oy, oz, sc = 1F, cs = 1F, sn;
+    private static boolean entityFormat, doubleSided;
 
     private FlameMesh() {}
+
+    /**
+     * Sets how the next shapes are written: plain position+colour (the mod's own render types), or the entity vertex
+     * format for vanilla entity render types (used under shader packs); {@code doubleSided} for render types that cull.
+     */
+    public static void format(boolean entity, boolean twoSided) { entityFormat = entity; doubleSided = twoSided; }
 
     private static void frame(float x, float y, float angle, float scale) {
         ox = x; oy = y; sc = scale; cs = Mth.cos(angle); sn = Mth.sin(angle);
@@ -36,13 +44,15 @@ public final class FlameMesh {
 
     private static void vtx(VertexConsumer b, PoseStack.Pose p, float x, float y, int rgb, float a) {
         float px = ox + (x * cs - y * sn) * sc, py = oy + (x * sn + y * cs) * sc;
-        b.addVertex(p, px, py, oz).setColor((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255, (int) (Mth.clamp(a, 0F, 1F) * 255F));
+        VertexConsumer v = b.addVertex(p, px, py, oz).setColor((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255, (int) (Mth.clamp(a, 0F, 1F) * 255F));
+        if (entityFormat) v.setUv(.5F, .5F).setOverlay(OverlayTexture.NO_OVERLAY).setLight(FULL).setNormal(p, 0F, 0F, 1F);
     }
 
     private static void quad(VertexConsumer b, PoseStack.Pose p,
                              float x0, float y0, int c0, float a0, float x1, float y1, int c1, float a1,
                              float x2, float y2, int c2, float a2, float x3, float y3, int c3, float a3) {
         vtx(b, p, x0, y0, c0, a0); vtx(b, p, x1, y1, c1, a1); vtx(b, p, x2, y2, c2, a2); vtx(b, p, x3, y3, c3, a3);
+        if (doubleSided) { vtx(b, p, x3, y3, c3, a3); vtx(b, p, x2, y2, c2, a2); vtx(b, p, x1, y1, c1, a1); vtx(b, p, x0, y0, c0, a0); }
     }
 
     private static void tri(VertexConsumer b, PoseStack.Pose p, float x0, float y0, int c0, float a0, float x1, float y1, int c1, float a1,
@@ -152,7 +162,9 @@ public final class FlameMesh {
             if (rim != 0) { // dark flame: a violet rim around a near-black body, both blended (light cannot darken)
                 if (pass == BODY) {
                     tongue(b, p, spread * 1.05F, hh * 1.14F, wid * 1.32F, rb * 1.2F, t, i * 2.1F, rim, rim, .55F * alpha, .7F * alpha, .2F, ag, sw * 2F);
+                    oz = .3F; // a hair nearer the camera, so depth-sorted render types still draw it over the rim
                     tongue(b, p, spread, hh, wid, rb, t, i * 2.1F, c0, c1, .97F * alpha, .93F * alpha, 0F, ag, sw * 2F);
+                    oz = 0F;
                 }
             } else if (pass == BODY) {
                 tongue(b, p, spread, hh, wid, rb, t, i * 2.1F, c0, c1, .9F * alpha, .62F * alpha, .12F, ag, sw * 2F);
@@ -367,6 +379,8 @@ public final class FlameMesh {
     }
 
     private static void ribVtx(VertexConsumer b, PoseStack.Pose p, float x, float y, float z, float u, float v, int r, int g, int bl, int a, float nx, float nz) {
-        b.addVertex(p, x, y, z).setColor(r, g, bl, a).setUv(u, v).setLight(FULL);
+        VertexConsumer vc = b.addVertex(p, x, y, z).setColor(r, g, bl, a).setUv(u, v);
+        if (entityFormat) vc.setOverlay(OverlayTexture.NO_OVERLAY).setLight(FULL).setNormal(p, nx, 0F, nz);
+        else vc.setLight(FULL);
     }
 }

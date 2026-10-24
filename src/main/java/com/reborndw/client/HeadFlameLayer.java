@@ -56,13 +56,19 @@ public class HeadFlameLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
         pose.mulPose(Axis.XP.rotation(elev * .5F));
         float s = U * L.sz * form * (float) (double) ClientConfig.FLAME_SCALE.get();
         pose.scale(s, -s, s);
-        FlameMesh.head(buffers.getBuffer(FlameRenderTypes.BODY), pose.last(), FlameMesh.BODY, L, calm, t, sec);
-        FlameMesh.head(buffers.getBuffer(FlameRenderTypes.GLOW), pose.last(), FlameMesh.GLOW, L, calm, t, sec);
+        boolean compat = FlameRenderTypes.compat();
+        FlameMesh.format(compat, false);
+        FlameMesh.head(buffers.getBuffer(compat ? FlameRenderTypes.BODY_COMPAT : FlameRenderTypes.BODY), pose.last(), FlameMesh.BODY, L, calm, t, sec);
+        FlameMesh.format(compat, compat);
+        FlameMesh.head(buffers.getBuffer(compat ? FlameRenderTypes.GLOW_COMPAT : FlameRenderTypes.GLOW), pose.last(), FlameMesh.GLOW, L, calm, t, sec);
+        FlameMesh.format(false, false);
         pose.popPose();
     }
 
     private static void rings(PoseStack pose, MultiBufferSource buffers, FlameLook L, boolean calm, float sec) {
-        var vc = buffers.getBuffer(FlameRenderTypes.SCRIPT);
+        boolean compat = FlameRenderTypes.compat();
+        var vc = buffers.getBuffer(compat ? FlameRenderTypes.SCRIPT_COMPAT : FlameRenderTypes.SCRIPT);
+        FlameMesh.format(compat, false);
         float spin = sec * (calm ? .7F : 1.2F);
         int n = L.script;
         int color = FlameMesh.mix(L.core, L.edge, .5F);
@@ -75,5 +81,6 @@ public class HeadFlameLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
             FlameMesh.ribbon(vc, pose.last(), .44F, .06F, color, .9F);
             pose.popPose();
         }
+        FlameMesh.format(false, false);
     }
 }

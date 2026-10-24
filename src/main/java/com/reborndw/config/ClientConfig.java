@@ -8,6 +8,8 @@ public final class ClientConfig {
 
     public enum Orientation { HORIZONTAL, VERTICAL }
 
+    public enum ShaderMode { AUTO, ALWAYS, NEVER }
+
     public static final ModConfigSpec SPEC;
 
     public static final ModConfigSpec.EnumValue<Anchor> METER_ANCHOR;
@@ -22,6 +24,7 @@ public final class ClientConfig {
     public static final ModConfigSpec.BooleanValue PANEL_BACKGROUND;
 
     public static final ModConfigSpec.BooleanValue FLAMES_SHOW, SCRIPT_RINGS;
+    public static final ModConfigSpec.EnumValue<ShaderMode> SHADER_MODE;
     public static final ModConfigSpec.DoubleValue FLAME_DENSITY, FLAME_SCALE, FLAME_RAISE, FLAME_FORWARD;
 
     static {
@@ -60,6 +63,9 @@ public final class ClientConfig {
         FLAME_FORWARD = b.comment("Moves the flame forward (positive) or back from the brow, in blocks.")
                 .translation(t + "flameForward").defineInRange("forward", 0.0, -0.3, 0.3);
         SCRIPT_RINGS = b.comment("The orbiting script around Earth-set flames.").translation(t + "scriptRings").define("scriptRings", true);
+        SHADER_MODE = b.comment("Draw flames with the render types shader packs expect. AUTO switches on while an Iris shader pack is in use;",
+                        "ALWAYS/NEVER force it, to compare which looks better with your pack.")
+                .translation(t + "shaderMode").defineEnum("shaderPackMode", ShaderMode.AUTO);
         b.pop();
 
         SPEC = b.build();

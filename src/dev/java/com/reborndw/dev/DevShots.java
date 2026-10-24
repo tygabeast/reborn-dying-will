@@ -137,6 +137,7 @@ public final class DevShots {
                 double v = Double.parseDouble(a[2]);
                 switch (a[1]) {
                     case "raise" -> com.reborndw.config.ClientConfig.FLAME_RAISE.set(v);
+                    case "compat" -> com.reborndw.config.ClientConfig.SHADER_MODE.set(v > 0 ? com.reborndw.config.ClientConfig.ShaderMode.ALWAYS : com.reborndw.config.ClientConfig.ShaderMode.AUTO);
                     case "forward" -> com.reborndw.config.ClientConfig.FLAME_FORWARD.set(v);
                     case "scale" -> com.reborndw.config.ClientConfig.FLAME_SCALE.set(v);
                     default -> {}

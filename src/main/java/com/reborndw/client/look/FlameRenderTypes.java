@@ -38,4 +38,33 @@ public final class FlameRenderTypes {
                     .setWriteMaskState(RenderStateShard.COLOR_WRITE)
                     .setOutputState(RenderStateShard.ITEM_ENTITY_TARGET)
                     .createCompositeState(false));
+
+    // ---- shader-pack path: vanilla entity render types, which shader packs know how to draw (glow = the "eyes" program)
+    private static final net.minecraft.resources.ResourceLocation WHITE = com.reborndw.RebornDW.id("textures/entity/flame_white.png");
+    public static final RenderType BODY_COMPAT = RenderType.entityTranslucentEmissive(WHITE);
+    public static final RenderType GLOW_COMPAT = RenderType.EYES.apply(WHITE, RenderStateShard.LIGHTNING_TRANSPARENCY);
+    public static final RenderType SCRIPT_COMPAT = RenderType.entityTranslucentEmissive(com.reborndw.RebornDW.id("textures/entity/script_ring.png"));
+
+    private static java.lang.invoke.MethodHandle irisInUse;
+    private static boolean irisLooked;
+
+    /** True when the shader-pack path should be used: always, never, or (auto) while an Iris shader pack is on. */
+    public static boolean compat() {
+        switch (com.reborndw.config.ClientConfig.SHADER_MODE.get()) {
+            case ALWAYS: return true;
+            case NEVER: return false;
+            default:
+        }
+        if (!irisLooked) {
+            irisLooked = true;
+            try {
+                Class<?> api = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+                Object inst = api.getMethod("getInstance").invoke(null);
+                irisInUse = java.lang.invoke.MethodHandles.publicLookup()
+                        .findVirtual(api, "isShaderPackInUse", java.lang.invoke.MethodType.methodType(boolean.class)).bindTo(inst);
+            } catch (Throwable ignored) { irisInUse = null; } // no Iris (or a different API): stay on the normal path
+        }
+        if (irisInUse == null) return false;
+        try { return (boolean) irisInUse.invokeExact(); } catch (Throwable t) { return false; }
+    }
 }

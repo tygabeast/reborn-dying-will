@@ -43,8 +43,12 @@ public class FlameShotRenderer extends EntityRenderer<FlameShotEntity> {
         float s = look.sz / 48F;
         pose.scale(s, s, s);
         float sec = (e.tickCount + partial) / 20F;
-        FlameMesh.shot(buffers.getBuffer(FlameRenderTypes.BODY), pose.last(), FlameMesh.BODY, look, sec, tailAngle, tailLen);
-        FlameMesh.shot(buffers.getBuffer(FlameRenderTypes.GLOW), pose.last(), FlameMesh.GLOW, look, sec, tailAngle, tailLen);
+        boolean compat = FlameRenderTypes.compat();
+        FlameMesh.format(compat, false);
+        FlameMesh.shot(buffers.getBuffer(compat ? FlameRenderTypes.BODY_COMPAT : FlameRenderTypes.BODY), pose.last(), FlameMesh.BODY, look, sec, tailAngle, tailLen);
+        FlameMesh.format(compat, compat);
+        FlameMesh.shot(buffers.getBuffer(compat ? FlameRenderTypes.GLOW_COMPAT : FlameRenderTypes.GLOW), pose.last(), FlameMesh.GLOW, look, sec, tailAngle, tailLen);
+        FlameMesh.format(false, false);
         pose.popPose();
     }
 
