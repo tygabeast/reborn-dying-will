@@ -86,7 +86,7 @@ public final class DevShots {
         String[] a = PLAN.get(index).a();
         hold(mc, a);
         if (++ticks >= settle) {
-            if (a[0].equals("head") || a[0].equals("shot")) {
+            if (a[0].equals("head") || a[0].equals("shot") || a[0].equals("inv")) {
                 String name = String.join("_", a).replace('.', 'p') + ".png";
                 Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), m -> {});
             }
@@ -104,6 +104,7 @@ public final class DevShots {
     }
 
     private static void hold(Minecraft mc, String[] a) {
+        if (a[0].equals("inv")) return;
         if (!a[0].equals("head") && !a[0].equals("shot")) return;
         boolean isShot = a[0].equals("shot");
         int o = isShot ? 2 : 3;
@@ -126,6 +127,7 @@ public final class DevShots {
     private static void next(Minecraft mc) {
         ticks = 0;
         settle = 30;
+        if (mc.screen != null) { mc.setScreen(null); mc.options.hideGui = true; }
         if (shot != null) { shot.discard(); mc.level.removeEntity(shot.getId(), Entity.RemovalReason.DISCARDED); shot = null; }
         index++;
         if (index >= PLAN.size()) { mc.stop(); return; }
@@ -162,6 +164,16 @@ public final class DevShots {
                 shot.setDeltaMovement(0.6, 0, 0);
                 shot.setPos(base.x, base.y + 1.6, base.z + 1.5);
                 mc.level.addEntity(shot);
+            }
+            case "inv" -> {
+                FlameData fd = new FlameData();
+                fd.active = Flame.valueOf(a[1]);
+                fd.form = Form.valueOf(a[2]);
+                ClientFlameCache.put(mc.player.getId(), fd);
+                mc.options.hideGui = false;
+                server(mc, "gamemode adventure Dev");
+                settle = 50;
+                mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player));
             }
             default -> settle = 1;
         }

@@ -171,6 +171,7 @@
   "reborn_dying_will.configuration.flameForward": "Forward",
   "reborn_dying_will.configuration.scriptRings": "Script rings",
   "reborn_dying_will.configuration.shaderMode": "Shader pack mode",
+  "reborn_dying_will.configuration.shaderExceptions": "Shader pack exceptions",
   "reborn_dying_will.configuration.anchor": "Position",
   "reborn_dying_will.configuration.offsetX": "Offset X",
   "reborn_dying_will.configuration.offsetY": "Offset Y",

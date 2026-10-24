@@ -45,26 +45,53 @@ public final class FlameRenderTypes {
     public static final RenderType GLOW_COMPAT = RenderType.EYES.apply(WHITE, RenderStateShard.LIGHTNING_TRANSPARENCY);
     public static final RenderType SCRIPT_COMPAT = RenderType.entityTranslucentEmissive(com.reborndw.RebornDW.id("textures/entity/script_ring.png"));
 
-    private static java.lang.invoke.MethodHandle irisInUse;
-    private static boolean irisLooked;
+    private static java.lang.invoke.MethodHandle irisInUse, irisPackName;
+    private static boolean irisLooked, cached;
+    private static long cachedAt;
 
-    /** True when the shader-pack path should be used: always, never, or (auto) while an Iris shader pack is on. */
+    /**
+     * True when the shader-pack path should be used: always, never, or (auto) while an Iris shader pack is on whose name
+     * is not in the exceptions list (packs that look better on the normal path). Re-checked at most once a second.
+     */
     public static boolean compat() {
         switch (com.reborndw.config.ClientConfig.SHADER_MODE.get()) {
             case ALWAYS: return true;
             case NEVER: return false;
             default:
         }
+        long now = System.currentTimeMillis();
+        if (now - cachedAt < 1000L) return cached;
+        cachedAt = now;
+        cached = autoCompat();
+        return cached;
+    }
+
+    private static boolean autoCompat() {
         if (!irisLooked) {
             irisLooked = true;
+            var lookup = java.lang.invoke.MethodHandles.publicLookup();
             try {
                 Class<?> api = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
                 Object inst = api.getMethod("getInstance").invoke(null);
-                irisInUse = java.lang.invoke.MethodHandles.publicLookup()
-                        .findVirtual(api, "isShaderPackInUse", java.lang.invoke.MethodType.methodType(boolean.class)).bindTo(inst);
+                irisInUse = lookup.findVirtual(api, "isShaderPackInUse", java.lang.invoke.MethodType.methodType(boolean.class)).bindTo(inst);
             } catch (Throwable ignored) { irisInUse = null; } // no Iris (or a different API): stay on the normal path
+            try { // the pack's name is not in Iris's public API; if this ever moves, exceptions just stop applying
+                irisPackName = lookup.findStatic(Class.forName("net.irisshaders.iris.Iris"), "getCurrentPackName",
+                        java.lang.invoke.MethodType.methodType(String.class));
+            } catch (Throwable ignored) { irisPackName = null; }
         }
         if (irisInUse == null) return false;
-        try { return (boolean) irisInUse.invokeExact(); } catch (Throwable t) { return false; }
+        try {
+            if (!(boolean) irisInUse.invokeExact()) return false;
+            if (irisPackName != null) {
+                String name = ((String) irisPackName.invokeExact());
+                if (name != null) {
+                    name = name.toLowerCase(java.util.Locale.ROOT);
+                    for (String ex : com.reborndw.config.ClientConfig.SHADER_EXCEPTIONS.get())
+                        if (!ex.isBlank() && name.contains(ex.toLowerCase(java.util.Locale.ROOT))) return false;
+                }
+            }
+            return true;
+        } catch (Throwable t) { return false; }
     }
 }

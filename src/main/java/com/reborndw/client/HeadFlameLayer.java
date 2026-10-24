@@ -1,5 +1,6 @@
 package com.reborndw.client;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.reborndw.client.look.FlameLook;
@@ -47,14 +48,18 @@ public class HeadFlameLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
 
         pose.pushPose();
         getParentModel().head.translateAndRotate(pose);
-        if (L.script > 0 && ClientConfig.SCRIPT_RINGS.get()) rings(pose, buffers, L, calm, sec);
-        pose.translate(0F, -(BROW_UP + (float) (double) ClientConfig.FLAME_RAISE.get()), -(BROW_FORWARD + (float) (double) ClientConfig.FLAME_FORWARD.get()));
-        // face the camera: the camera sits at the origin of the render pose
-        INV.set(pose.last().pose()).invert().transformPosition(CAM.set(0F, 0F, 0F));
+        float s = U * L.sz * form * (float) (double) ClientConfig.FLAME_SCALE.get();
+        float up = BROW_UP + (float) (double) ClientConfig.FLAME_RAISE.get();
+        if (L.script > 0 && ClientConfig.SCRIPT_RINGS.get()) rings(pose, buffers, L, calm, sec, up + L.height() * .45F * s);
+        pose.translate(0F, -up, -(BROW_FORWARD + (float) (double) ClientConfig.FLAME_FORWARD.get()));
+        // face the camera. In the world the camera sits at the origin of the render pose (perspective); in a GUI (the
+        // inventory doll, orthographic) it looks straight down the screen's z axis instead.
+        INV.set(pose.last().pose()).invert();
+        if (RenderSystem.getProjectionMatrix().m23() == 0F) INV.transformDirection(CAM.set(0F, 0F, 1F));
+        else INV.transformPosition(CAM.set(0F, 0F, 0F));
         pose.mulPose(Axis.YP.rotation((float) Mth.atan2(CAM.x, CAM.z)));
         float elev = (float) Mth.atan2(-CAM.y, Mth.sqrt(CAM.x * CAM.x + CAM.z * CAM.z));
         pose.mulPose(Axis.XP.rotation(elev * .5F));
-        float s = U * L.sz * form * (float) (double) ClientConfig.FLAME_SCALE.get();
         pose.scale(s, -s, s);
         boolean compat = FlameRenderTypes.compat();
         FlameMesh.format(compat, false);
@@ -65,7 +70,8 @@ public class HeadFlameLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
         pose.popPose();
     }
 
-    private static void rings(PoseStack pose, MultiBufferSource buffers, FlameLook L, boolean calm, float sec) {
+    /** Bands of script circling the head at the height of the flame's middle, wide enough to clear a helmet's corners. */
+    private static void rings(PoseStack pose, MultiBufferSource buffers, FlameLook L, boolean calm, float sec, float height) {
         boolean compat = FlameRenderTypes.compat();
         var vc = buffers.getBuffer(compat ? FlameRenderTypes.SCRIPT_COMPAT : FlameRenderTypes.SCRIPT);
         FlameMesh.format(compat, false);
@@ -74,11 +80,11 @@ public class HeadFlameLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
         int color = FlameMesh.mix(L.core, L.edge, .5F);
         for (int i = 0; i < n; i++) {
             pose.pushPose();
-            pose.translate(0F, -0.27F, 0F);
-            if (n > 1) pose.mulPose(Axis.ZP.rotation(i == 0 ? .38F : -.38F));
+            pose.translate(0F, -height, 0F);
+            if (n > 1) pose.mulPose(Axis.ZP.rotation(i == 0 ? .28F : -.28F));
             else pose.mulPose(Axis.ZP.rotation(.12F));
             pose.mulPose(Axis.YP.rotation(i == 0 ? spin : -spin));
-            FlameMesh.ribbon(vc, pose.last(), .44F, .06F, color, .9F);
+            FlameMesh.ribbon(vc, pose.last(), .53F, .065F, color, .9F);
             pose.popPose();
         }
         FlameMesh.format(false, false);

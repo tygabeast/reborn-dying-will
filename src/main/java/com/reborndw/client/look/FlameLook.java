@@ -77,4 +77,14 @@ public final class FlameLook {
     public final List<Emit> trail = new ArrayList<>();
 
     FlameLook(int core, int edge) { this.core = core; this.edge = edge; }
+
+    /** Rough height of the head flame above its base, in units (for placing things around it, such as script bands). */
+    public float height() {
+        return switch (body) {
+            case TONGUES -> h;
+            case Y -> stem * .85F + arm;
+            case BOLTS -> Math.max(26F, boltLen);
+            default -> 26F;
+        };
+    }
 }

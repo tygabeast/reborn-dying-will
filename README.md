@@ -1,10 +1,10 @@
-# Reborn - Dying Will (0.3.3)
+# Reborn - Dying Will (0.3.4)
 
 NeoForge 21.1 / Minecraft 1.21.1. Requires Curios (9.x for 1.21.1).
 
 Milestone 1 laid the foundation: the flame system, the Dying Will form ladder, Flame Gems, the basic resonator
 and Sky's ring kit. Milestone 2 (0.2.0) added the other six Sky-set flames' ring kits, the Ring Forge and flame pills.
-0.3.3 adds a shader-pack mode for the flame looks reworked in 0.3.2 (below). Milestone 3 (0.3.0) added flame infusion: the Infuse toggle, the Infusion Anvil and infused weapon moves.
+0.3.4 polishes the flame looks (below): shader-pack exceptions, script band placement, inventory view. Milestone 3 (0.3.0) added flame infusion: the Infuse toggle, the Infusion Anvil and infused weapon moves.
 Every number is a placeholder in the server config files `reborn_dying_will-server.toml` and `reborn_dying_will-kits.toml`.
 
 ## What's in it
@@ -165,7 +165,14 @@ Illusion Realm, Hallucination), gloves, Storm/Cloud-infused tools' mining effect
   setting also thins the motes. Players more than 64 blocks away are skipped.
 - Shader pack mode (AUTO / ALWAYS / NEVER): with an Iris shader pack on, AUTO draws flames, shots and script bands with
   vanilla entity render types (the glow goes through the same program as spider eyes), which shader packs are written
-  to handle. ALWAYS/NEVER force one path so you can compare per pack.
+  to handle. ALWAYS/NEVER force one path so you can compare per pack. "Shader pack exceptions" lists packs (any part
+  of the file name) that AUTO keeps on the normal path; MakeUp is listed by default.
+
+### 0.3.4 changes
+- Shader pack exceptions list (default: MakeUp), since MakeUp looks worse on the shader-pack path.
+- Script bands sit at the height of the flame's middle and are wider, clearing helmet corners; Earth's two bands cross
+  at a shallower angle.
+- The flame faces the viewer correctly in the inventory doll (GUI views are orthographic).
 
 ### 0.3.3 changes
 - Shader pack mode added (fixes banded flames under Complementary Reimagined/Unbound; untested here, needs Iris).

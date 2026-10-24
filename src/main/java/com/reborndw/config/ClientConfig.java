@@ -25,6 +25,7 @@ public final class ClientConfig {
 
     public static final ModConfigSpec.BooleanValue FLAMES_SHOW, SCRIPT_RINGS;
     public static final ModConfigSpec.EnumValue<ShaderMode> SHADER_MODE;
+    public static final ModConfigSpec.ConfigValue<java.util.List<? extends String>> SHADER_EXCEPTIONS;
     public static final ModConfigSpec.DoubleValue FLAME_DENSITY, FLAME_SCALE, FLAME_RAISE, FLAME_FORWARD;
 
     static {
@@ -66,6 +67,9 @@ public final class ClientConfig {
         SHADER_MODE = b.comment("Draw flames with the render types shader packs expect. AUTO switches on while an Iris shader pack is in use;",
                         "ALWAYS/NEVER force it, to compare which looks better with your pack.")
                 .translation(t + "shaderMode").defineEnum("shaderPackMode", ShaderMode.AUTO);
+        SHADER_EXCEPTIONS = b.comment("Shader packs (any part of the pack's file name) that look better on the normal path; AUTO leaves them on it.")
+                .translation(t + "shaderExceptions")
+                .defineListAllowEmpty("shaderPackExceptions", java.util.List.of("MakeUp"), () -> "", o -> o instanceof String);
         b.pop();
 
         SPEC = b.build();
