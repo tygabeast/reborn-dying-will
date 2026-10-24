@@ -213,6 +213,7 @@ public final class ModRegistry {
         RECIPES.register(bus);
         MENUS.register(bus);
         TABS.register(bus);
+        ModParticles.PARTICLES.register(bus);
     }
 
     public static void attributes(EntityAttributeCreationEvent event) {

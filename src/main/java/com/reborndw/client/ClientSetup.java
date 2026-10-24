@@ -56,9 +56,21 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void renderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModRegistry.DYING_WILL_BULLET_ENTITY.get(), ThrownItemRenderer::new);
-        event.registerEntityRenderer(ModRegistry.FLAME_SHOT.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
+        event.registerEntityRenderer(ModRegistry.FLAME_SHOT.get(), FlameShotRenderer::new);
         event.registerEntityRenderer(ModRegistry.MIST_DECOY.get(), DecoyRenderer::new);
         event.registerBlockEntityRenderer(ModRegistry.RESONATOR_BE.get(), ResonatorRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void layers(EntityRenderersEvent.AddLayers event) {
+        for (var skin : event.getSkins()) {
+            if (event.getSkin(skin) instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer pr) pr.addLayer(new HeadFlameLayer(pr));
+        }
+    }
+
+    @SubscribeEvent
+    public static void particles(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent event) {
+        event.registerSpriteSet(com.reborndw.registry.ModParticles.MOTE.get(), com.reborndw.client.particle.MoteParticle.Provider::new);
     }
 
     @SubscribeEvent

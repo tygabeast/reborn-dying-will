@@ -5,7 +5,6 @@ import com.reborndw.ability.SkyAbilities;
 import com.reborndw.flame.Flame;
 import com.reborndw.flame.Rank;
 import com.reborndw.registry.ModRegistry;
-import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -79,15 +78,7 @@ public class FlameShotEntity extends Projectile {
             }
             if (--lifeTicks <= 0) { discard(); return; }
         } else {
-            Flame f = flame();
-            // Mist shots are nearly invisible in flight
-            int count = f == Flame.MIST ? (tickCount % 4 == 0 ? 1 : 0) : 3;
-            var color = SkyAbilities.rgb(f.color);
-            for (int i = 0; i < count; i++) {
-                double t = i / 3.0;
-                level().addParticle(new DustParticleOptions(color, entityData.get(SIZE)),
-                        getX() - motion.x * t, getY() - motion.y * t, getZ() - motion.z * t, 0, 0, 0);
-            }
+            com.reborndw.client.ShotTrail.tick(this);
         }
         setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
     }

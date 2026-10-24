@@ -17,13 +17,13 @@ public enum Flame implements StringRepresentable {
     LIGHTNING(Family.SKY, 0x3DDC64, "Hardening"),
     CLOUD(Family.SKY, 0x8E44EC, "Propagation"),
     MIST(Family.SKY, 0x6C3FA8, "Construction"),
-    EARTH(Family.EARTH, 0xB5482B, "Gravity"),
-    GLACIER(Family.EARTH, 0x9FE6FF, "Freezing"),
-    FOREST(Family.EARTH, 0x2E8B3A, "Growth"),
-    MOUNTAIN(Family.EARTH, 0x8C6A4A, "Landform"),
-    SWAMP(Family.EARTH, 0x5D6B2F, "Fermentation"),
-    DESERT(Family.EARTH, 0xE3C07A, "Mirage"),
-    VOLCANO(Family.EARTH, 0xFF4A12, "Eruption"),
+    EARTH(Family.EARTH, 0xF04A1D, "Gravity"),
+    GLACIER(Family.EARTH, 0x9A1EA9, "Freezing"),
+    FOREST(Family.EARTH, 0xFFEF80, "Growth"),
+    MOUNTAIN(Family.EARTH, 0x7AFF95, "Landform"),
+    SWAMP(Family.EARTH, 0xFF0B37, "Fermentation"),
+    DESERT(Family.EARTH, 0x563286, "Mirage"),
+    RIVER(Family.EARTH, 0x1264D1, "Erosion"),
     NIGHT(Family.NIGHT, 0x1B1033, "Warp");
 
     public enum Family { SKY, EARTH, NIGHT }
@@ -56,5 +56,5 @@ public enum Flame implements StringRepresentable {
 
     /** The seven flames a natural awakening can reveal. */
     public static final Flame[] SKY_SET = {SKY, STORM, RAIN, SUN, LIGHTNING, CLOUD, MIST};
-    public static final Flame[] EARTH_SET = {EARTH, GLACIER, FOREST, MOUNTAIN, SWAMP, DESERT, VOLCANO};
+    public static final Flame[] EARTH_SET = {EARTH, GLACIER, FOREST, MOUNTAIN, SWAMP, DESERT, RIVER};
 }

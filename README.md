@@ -1,10 +1,10 @@
-# Reborn - Dying Will (0.3.0)
+# Reborn - Dying Will (0.3.1)
 
 NeoForge 21.1 / Minecraft 1.21.1. Requires Curios (9.x for 1.21.1).
 
 Milestone 1 laid the foundation: the flame system, the Dying Will form ladder, Flame Gems, the basic resonator
 and Sky's ring kit. Milestone 2 (0.2.0) added the other six Sky-set flames' ring kits, the Ring Forge and flame pills.
-Milestone 3 (0.3.0) adds flame infusion: the Infuse toggle, the Infusion Anvil and infused weapon moves.
+0.3.1 is graphics part 1: the in-game flame looks (below). Milestone 3 (0.3.0) added flame infusion: the Infuse toggle, the Infusion Anvil and infused weapon moves.
 Every number is a placeholder in the server config files `reborn_dying_will-server.toml` and `reborn_dying_will-kits.toml`.
 
 ## What's in it
@@ -151,6 +151,16 @@ harder and restore 1% of capacity to allied players within 6 blocks.
 
 Not yet: signatures (X-Burner, Disintegration Beam, Downpour, Maximum Cannon, Lightning Bulwark, Cloud Multiplication,
 Illusion Realm, Hallucination), gloves, Storm/Cloud-infused tools' mining effects.
+
+## Flame looks (0.3.1)
+- Every active form draws a tapered flame on the forehead, two crossed planes with a rounded base, in the colours and
+  shapes picked from the preview. Dying Will is jagged and fast; Hyper is calmer and smoother; Ultimate is Hyper at 1.3x.
+- Each flame throws its own motes (sparks, rising drops, chips, leaves, bubbles, sand...). Earth-set flames carry
+  orbiting script rings; Earth's is a canon Y flame with two crossing rings.
+- Flame shots are camera-facing glowing bodies with a mote trail (Lightning's is a green crackle web).
+- Client config "Flame looks": show on/off, particle density, size, height offset, script rings. The game's Particles
+  setting also thins the motes. Players more than 64 blocks away are skipped.
+- The Earth-set flame colours (gems, HUD) now follow the new looks.
 
 ## Keys (rebindable, "Reborn - Dying Will" category)
 Z Primary, X Secondary, C Signature, H Hyper, V Release, Y choose flame, G Infuse, J toggle the ability panel.

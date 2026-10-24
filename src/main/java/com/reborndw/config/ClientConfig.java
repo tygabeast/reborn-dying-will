@@ -21,6 +21,9 @@ public final class ClientConfig {
     public static final ModConfigSpec.DoubleValue PANEL_SCALE;
     public static final ModConfigSpec.BooleanValue PANEL_BACKGROUND;
 
+    public static final ModConfigSpec.BooleanValue FLAMES_SHOW, SCRIPT_RINGS;
+    public static final ModConfigSpec.DoubleValue FLAME_DENSITY, FLAME_SCALE, FLAME_HEIGHT;
+
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         String t = "reborn_dying_will.configuration.";
@@ -44,6 +47,17 @@ public final class ClientConfig {
         PANEL_Y = b.translation(t + "offsetY").defineInRange("offsetY", 0, -2000, 2000);
         PANEL_SCALE = b.translation(t + "scale").defineInRange("scale", 1.0, 0.25, 4.0);
         PANEL_BACKGROUND = b.translation(t + "background").define("background", true);
+        b.pop();
+
+        b.translation(t + "flameLooks").push("flameLooks");
+        FLAMES_SHOW = b.comment("Draw the flame on players' foreheads (turn off for the vanilla look or to save frames).")
+                .translation(t + "flamesShow").define("show", true);
+        FLAME_DENSITY = b.comment("How many sparks, drops and chips flames throw off. 0 leaves only the flame itself.")
+                .translation(t + "flameDensity").defineInRange("particleDensity", 1.0, 0.0, 2.0);
+        FLAME_SCALE = b.translation(t + "flameScale").defineInRange("scale", 1.0, 0.5, 2.0);
+        FLAME_HEIGHT = b.comment("Moves the flame up or down on the head, in blocks.")
+                .translation(t + "flameHeight").defineInRange("heightOffset", 0.0, -0.3, 0.3);
+        SCRIPT_RINGS = b.comment("The orbiting script around Earth-set flames.").translation(t + "scriptRings").define("scriptRings", true);
         b.pop();
 
         SPEC = b.build();
