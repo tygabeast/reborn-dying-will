@@ -41,6 +41,7 @@ public final class DevShots {
     private static Vec3 base;
     private static boolean ready;
     private static int waitLog;
+    private static boolean fpReady;
 
     private DevShots() {}
 
@@ -86,7 +87,7 @@ public final class DevShots {
         String[] a = PLAN.get(index).a();
         hold(mc, a);
         if (++ticks >= settle) {
-            if (a[0].equals("head") || a[0].equals("shot") || a[0].equals("inv") || a[0].equals("fx")) {
+            if (a[0].equals("head") || a[0].equals("shot") || a[0].equals("inv") || a[0].equals("fx") || a[0].equals("anim") || a[0].equals("fp")) {
                 String name = String.join("_", a).replace('.', 'p') + ".png";
                 Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), m -> {});
             }
@@ -104,7 +105,19 @@ public final class DevShots {
     }
 
     private static void hold(Minecraft mc, String[] a) {
-        if (a[0].equals("inv")) return;
+        if (a[0].equals("inv") || a[0].equals("fp")) return;
+        if (a[0].equals("anim")) {
+            float yaw = Float.parseFloat(a[3]), elev = Float.parseFloat(a[4]), dist = Float.parseFloat(a[5]);
+            place(dummy, base, 0F, 0F);
+            Vec3 target = base.add(0, 1.1, 0);
+            double yr = Math.toRadians(yaw), er = Math.toRadians(elev);
+            Vec3 cam = target.add(Math.sin(yr) * Math.cos(er) * dist, Math.sin(er) * dist, Math.cos(yr) * Math.cos(er) * dist);
+            Vec3 d = target.subtract(cam);
+            place(mc.player, cam.subtract(0, mc.player.getEyeHeight(), 0), (float) Math.toDegrees(Math.atan2(-d.x, d.z)),
+                    (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z))));
+            mc.player.getAbilities().flying = true;
+            return;
+        }
         boolean isFx = a[0].equals("fx");
         if (!a[0].equals("head") && !a[0].equals("shot") && !isFx) return;
         boolean isShot = a[0].equals("shot");
@@ -133,6 +146,7 @@ public final class DevShots {
         ticks = 0;
         settle = 30;
         if (mc.screen != null) { mc.setScreen(null); mc.options.hideGui = true; }
+        com.reborndw.client.anim.MoveAnims.frozen = -1F;
         if (shot != null) { shot.discard(); mc.level.removeEntity(shot.getId(), Entity.RemovalReason.DISCARDED); shot = null; }
         index++;
         if (index >= PLAN.size()) { mc.stop(); return; }
@@ -197,6 +211,29 @@ public final class DevShots {
                     }
                 });
                 settle = a.length > 3 ? Integer.parseInt(a[3]) : 4;
+            }
+            case "anim", "fp" -> {
+                ClientFlameCache.put(dummy.getId(), new FlameData());
+                var anim = com.reborndw.anim.MoveAnim.valueOf(a[1]);
+                ItemStack held = ItemStack.EMPTY;
+                for (String o : a) if (o.startsWith("hold=")) held = new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(o.substring(5))));
+                boolean off = List.of(a).contains("off");
+                if (a[0].equals("anim")) {
+                    dummy.setItemSlot(off ? EquipmentSlot.OFFHAND : EquipmentSlot.MAINHAND, held);
+                    dummy.setItemSlot(off ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND, ItemStack.EMPTY);
+                    com.reborndw.client.anim.MoveAnims.play(dummy.getId(), anim, off);
+                } else {
+                    if (!fpReady) { server(mc, "gamemode adventure Dev"); fpReady = true; }
+                    mc.options.hideGui = false;
+                    mc.options.setCameraType(CameraType.FIRST_PERSON);
+                    mc.player.getInventory().selected = 0;
+                    mc.player.getInventory().items.set(0, off ? ItemStack.EMPTY : held);
+                    mc.player.getInventory().offhand.set(0, off ? held : ItemStack.EMPTY);
+                    place(mc.player, base.add(4, 0, 4), 0F, 15F);
+                    com.reborndw.client.anim.MoveAnims.play(mc.player.getId(), anim, off);
+                }
+                com.reborndw.client.anim.MoveAnims.frozen = Float.parseFloat(a[2]);
+                settle = 8;
             }
             case "cmd" -> { server(mc, String.join(" ", java.util.Arrays.copyOfRange(a, 1, a.length))); settle = 10; }
             case "inv" -> {

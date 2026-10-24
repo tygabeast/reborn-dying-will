@@ -1,5 +1,6 @@
 package com.reborndw.ability;
 
+import com.reborndw.anim.MoveAnim;
 import com.reborndw.config.KitConfig;
 import com.reborndw.entity.FlameShotEntity;
 import com.reborndw.flame.Flame;
@@ -44,6 +45,7 @@ public final class WeaponMoves {
         boolean charging = !primary && (s.category() == WeaponCategory.HEAVY || s.category() == WeaponCategory.FISTS);
         if (charging) { // hold to charge, release to strike; paid on release
             if (d.chargeCategory != null) return;
+            MoveAnim.play(player, s.category() == WeaponCategory.HEAVY ? MoveAnim.CHARGE_HEAVY : MoveAnim.CHARGE_FIST, s.hand());
             d.chargeCategory = s.category();
             d.chargeTicks = 0;
             d.heldAction = action;
@@ -62,6 +64,7 @@ public final class WeaponMoves {
         d.chargeCategory = null;
         d.chargeTicks = 0;
         InfusionHelper.Source s = InfusionHelper.source(player);
+        MoveAnim.play(player, cat == WeaponCategory.HEAVY ? MoveAnim.SMASH : MoveAnim.HEAVY_PUNCH, s != null ? s.hand() : net.minecraft.world.InteractionHand.MAIN_HAND);
         if (s == null || s.category() != cat) return true; // swapped weapons mid-charge
         if (!Kits.spend(player, KitConfig.MOVE_SECONDARY_COST.get())) return true;
         LivingEntity t = target(player, cat == WeaponCategory.HEAVY ? 4.5 : 3.5, 25);
@@ -71,7 +74,6 @@ public final class WeaponMoves {
         }
         float base = cat == WeaponCategory.HEAVY ? attack(player) : fistDamage(player, s);
         float dmg = (float) (base * (1.5 + 1.5 * charge) * s.strength());
-        player.swing(s.hand(), true);
         hit(player, s, t, dmg);
         InfusionEffectsBridge.knock(player, t, 0.6 + charge);
         if (cat == WeaponCategory.HEAVY) FlameFx.slam(player.serverLevel(), s.flame(), t.position(), 1.5 + 1.5 * charge);
@@ -94,7 +96,10 @@ public final class WeaponMoves {
 
     private static void primary(ServerPlayer player, FlameData d, InfusionHelper.Source s) {
         ServerLevel level = player.serverLevel();
-        player.swing(s.hand(), true);
+        MoveAnim.play(player, switch (s.category()) {
+            case BLADE -> MoveAnim.SLASH; case HEAVY -> MoveAnim.SLAM; case POLEARM -> MoveAnim.THRUST; case SHORT -> MoveAnim.FLURRY;
+            case WHIP -> MoveAnim.LASH; case BOW -> MoveAnim.BOW; case GUN -> MoveAnim.GUN; case SHIELD -> MoveAnim.BRACE; case FISTS -> MoveAnim.PUNCH;
+        }, s.hand());
         switch (s.category()) {
             case BLADE -> { // flame slash arc
                 for (LivingEntity e : cone(player, 4.0, 50)) hit(player, s, e, attack(player) * (float) s.strength());
@@ -124,7 +129,6 @@ public final class WeaponMoves {
                     DelayedTasks.schedule(i * 2, () -> {
                         if (!t.isAlive() || player.isRemoved()) return;
                         t.invulnerableTime = 0;
-                        if (n > 0) player.swing(n % 2 == 0 ? s.hand() : other(s.hand()), true);
                         hit(player, s, t, dmg);
                         FlameFx.slash(player, s.flame(), 1.6, 70, n % 2 == 0 ? -40 : 40);
                         sound(player, SoundEvents.PLAYER_ATTACK_WEAK, 1.4F);
@@ -168,7 +172,15 @@ public final class WeaponMoves {
 
     private static void secondary(ServerPlayer player, FlameData d, InfusionHelper.Source s) {
         ServerLevel level = player.serverLevel();
-        player.swing(s.hand(), true);
+        switch (s.category()) {
+            case BLADE -> MoveAnim.play(player, MoveAnim.COUNTER, s.hand());
+            case POLEARM -> MoveAnim.play(player, MoveAnim.SPIN, s.hand());
+            case SHORT -> MoveAnim.play(player, MoveAnim.DASH, s.hand());
+            case WHIP -> MoveAnim.play(player, MoveAnim.BIND, s.hand());
+            case BOW -> MoveAnim.play(player, MoveAnim.BOW, s.hand());
+            case SHIELD -> MoveAnim.play(player, MoveAnim.BASH, s.hand());
+            default -> {} // guns animate per shot; heavy and fists charge
+        }
         switch (s.category()) {
             case BLADE -> { // counter stance: the next melee hit within a second is turned back
                 d.counterTicks = 20;
@@ -214,6 +226,7 @@ public final class WeaponMoves {
                     DelayedTasks.schedule(i * 3, () -> {
                         if (player.isRemoved()) return;
                         shoot(player, s, 0, 4.0, KitConfig.FLAME_ROUND_DAMAGE.get() * 0.8, 48);
+                        MoveAnim.play(player, MoveAnim.GUN, s.hand());
                         FlameFx.muzzle(player, s.flame());
                         sound(player, SoundEvents.FIREWORK_ROCKET_BLAST, 1.8F);
                     });
@@ -304,10 +317,6 @@ public final class WeaponMoves {
 
     static LivingEntity lineTarget(ServerPlayer player, double length) {
         return line(player, length, 1.2).stream().min(Comparator.comparingDouble(e -> e.distanceToSqr(player))).orElse(null);
-    }
-
-    private static net.minecraft.world.InteractionHand other(net.minecraft.world.InteractionHand h) {
-        return h == net.minecraft.world.InteractionHand.MAIN_HAND ? net.minecraft.world.InteractionHand.OFF_HAND : net.minecraft.world.InteractionHand.MAIN_HAND;
     }
 
     private static void sound(ServerPlayer player, net.minecraft.sounds.SoundEvent sound, float pitch) {

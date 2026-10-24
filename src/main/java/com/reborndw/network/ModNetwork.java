@@ -15,6 +15,8 @@ public final class ModNetwork {
                 (payload, ctx) -> ctx.enqueueWork(() -> ClientPayloadHandler.handleSync(payload)));
         r.playToClient(FlameFxPayload.TYPE, FlameFxPayload.CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> ClientPayloadHandler.handleFx(payload)));
+        r.playToClient(MoveAnimPayload.TYPE, MoveAnimPayload.CODEC,
+                (payload, ctx) -> ctx.enqueueWork(() -> ClientPayloadHandler.handleMoveAnim(payload)));
         r.playToServer(ActionPayload.TYPE, ActionPayload.CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> {
                     if (ctx.player() instanceof ServerPlayer sp) AbilityHandler.handle(sp, payload.action(), payload.pressed());

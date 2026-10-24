@@ -22,4 +22,9 @@ public final class ClientPayloadHandler {
     public static void handleFx(com.reborndw.network.FlameFxPayload payload) {
         com.reborndw.client.fx.FxManager.add(payload);
     }
+
+    public static void handleMoveAnim(com.reborndw.network.MoveAnimPayload payload) {
+        var anims = com.reborndw.anim.MoveAnim.values();
+        com.reborndw.client.anim.MoveAnims.play(payload.entityId(), anims[Math.floorMod(payload.anim(), anims.length)], payload.offHand());
+    }
 }

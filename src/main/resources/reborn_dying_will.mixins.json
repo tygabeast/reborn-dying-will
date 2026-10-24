@@ -3,6 +3,11 @@
   "minVersion": "0.8",
   "package": "com.reborndw.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": ["ItemRendererMixin"],
-  "injectors": { "defaultRequire": 0 }
+  "client": [
+    "ItemRendererMixin",
+    "HumanoidModelMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
 }

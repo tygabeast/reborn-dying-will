@@ -28,7 +28,7 @@ public final class ClientEvents {
     public static void tick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
-        if (!mc.isPaused()) com.reborndw.client.fx.FxManager.tick();
+        if (!mc.isPaused()) { com.reborndw.client.fx.FxManager.tick(); com.reborndw.client.anim.MoveAnims.tick(); }
         hold(ClientSetup.PRIMARY, ActionPayload.Action.PRIMARY, 0);
         hold(ClientSetup.SECONDARY, ActionPayload.Action.SECONDARY, 1);
         hold(ClientSetup.SIGNATURE, ActionPayload.Action.SIGNATURE, 2);
@@ -99,5 +99,6 @@ public final class ClientEvents {
     public static void logout(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientFlameCache.clear();
         com.reborndw.client.fx.FxManager.clear();
+        com.reborndw.client.anim.MoveAnims.clear();
     }
 }

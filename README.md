@@ -1,10 +1,10 @@
-# Reborn - Dying Will (0.4.0)
+# Reborn - Dying Will (0.4.1)
 
 NeoForge 21.1 / Minecraft 1.21.1. Requires Curios (9.x for 1.21.1).
 
 Milestone 1 laid the foundation: the flame system, the Dying Will form ladder, Flame Gems, the basic resonator
 and Sky's ring kit. Milestone 2 (0.2.0) added the other six Sky-set flames' ring kits, the Ring Forge and flame pills.
-0.4.0 finishes the graphics pass: flame-coloured infusion glints, weapon move and hit effects, and infused shields' on-block effects (below). Milestone 3 (0.3.0) added flame infusion: the Infuse toggle, the Infusion Anvil and infused weapon moves.
+0.4.1 adds weapon-move animations. 0.4.0 finished the graphics pass: flame-coloured infusion glints, weapon move and hit effects, and infused shields' on-block effects (below). Milestone 3 (0.3.0) added flame infusion: the Infuse toggle, the Infusion Anvil and infused weapon moves.
 Every number is a placeholder in the server config files `reborn_dying_will-server.toml` and `reborn_dying_will-kits.toml`.
 
 ## What's in it
@@ -167,6 +167,19 @@ Illusion Realm, Hallucination), gloves, Storm/Cloud-infused tools' mining effect
   vanilla entity render types (the glow goes through the same program as spider eyes), which shader packs are written
   to handle. ALWAYS/NEVER force one path so you can compare per pack. "Shader pack exceptions" lists packs (any part
   of the file name) that AUTO keeps on the normal path; MakeUp is listed by default.
+
+### 0.4.1 changes
+- **Move animations** replace the plain arm swing, in third person (what others see) and first person (your view):
+  blade slash sweeps diagonally from high on one side to low on the other with the crescent; punches jab straight
+  out; bows use the bow-drawing pose then let go; shield brace raises the shield for the whole brace and the bash
+  drives it forward with a lean; the blade counter holds the sword across the body; polearm thrust winds up overhead
+  and drives forward and down; polearm spin turns the whole body; heavy slam goes overhead then down; charging holds
+  the weapon overhead (heavy) or the fist drawn back, released into the strike; short-blade flurry alternates stabs,
+  the dash leans forward; whip lash and bind wind up overhead and flick; guns aim with a recoil kick per shot.
+  Left-handed players get mirrored moves. Short blades, whips and guns have no items yet, so those are untested.
+- How: the server sends one tiny packet per move to the player and everyone tracking them; the pose is applied by an
+  optional mixin on the humanoid model (if it fails to apply, moves just play without a pose), and the first-person
+  hand is drawn by the mod during a move. One access-transformer line exposes the game's first-person arm drawing.
 
 ### 0.4.0 changes
 - **Infusion glint:** infused items shimmer in their flame's colour only while the infusion is live for whoever holds
