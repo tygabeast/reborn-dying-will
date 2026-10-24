@@ -358,6 +358,112 @@ public final class FlameMesh {
         }
     }
 
+    // ---- effect shapes (used by the client's FxManager; all in the XY plane of the current pose)
+
+    /** A soft round glow. */
+    public static void glow(VertexConsumer b, PoseStack.Pose p, float r, int c, float a) { disc(b, p, 0, 0, r, c, a, c, a * .45F, c); }
+
+    /** A hot flash: a bright centre fading to the flame's colour at the rim. */
+    public static void flash(VertexConsumer b, PoseStack.Pose p, float r, int c, float a) {
+        disc(b, p, 0, 0, r, mix(c, WHITE, .6F), a, c, a * .5F, c);
+    }
+
+    /** A ring with soft inner and outer edges. */
+    public static void ring(VertexConsumer b, PoseStack.Pose p, float r, float w, int c, float a) {
+        final int N = 32;
+        float ri = Math.max(0F, r - w), ro = r + w;
+        float pc = 1F, ps = 0F;
+        for (int i = 1; i <= N; i++) {
+            float ang = i * Mth.TWO_PI / N, co = Mth.cos(ang), si = Mth.sin(ang);
+            quad(b, p, ri * pc, ri * ps, c, 0, r * pc, r * ps, c, a, r * co, r * si, c, a, ri * co, ri * si, c, 0);
+            quad(b, p, r * pc, r * ps, c, a, ro * pc, ro * ps, c, 0, ro * co, ro * si, c, 0, r * co, r * si, c, a);
+            pc = co; ps = si;
+        }
+    }
+
+    /** A soft line. */
+    public static void stroke(VertexConsumer b, PoseStack.Pose p, float x0, float y0, float x1, float y1, float w, int c, float a) {
+        line(b, p, x0, y0, x1, y1, w, c, a);
+    }
+
+    /**
+     * A jagged bolt along the x axis from 0 to {@code len}: a wide soft glow line under a thin bright core. {@code seed}
+     * picks the zigzag; change it every few ticks for a crackling look.
+     */
+    public static void zigzag(VertexConsumer b, PoseStack.Pose p, int pass, float len, float jitter, int seed, int edge, float w, float a) {
+        int segs = Math.max(3, (int) (len / (jitter * 2.2F + 1e-3F)));
+        segs = Math.min(segs, 16);
+        float px = 0, py = 0;
+        int core = mix(edge, WHITE, .8F);
+        for (int i = 1; i <= segs; i++) {
+            float x = len * i / segs, y = i == segs ? 0 : (rf(seed + i * 7) - .5F) * 2F * jitter;
+            if (pass == BODY) line(b, p, px, py, x, y, w * 1.4F, edge, .55F * a);
+            else { line(b, p, px, py, x, y, w * 3F, edge, .4F * a); line(b, p, px, py, x, y, w, core, a); }
+            px = x; py = y;
+        }
+    }
+
+    /** A wavy band of flame along the x axis (whip lashes and binds). */
+    public static void wave(VertexConsumer b, PoseStack.Pose p, int pass, float len, float amp, float phase, int c0, int c1, float w, float a) {
+        final int SEG = 14;
+        float px = 0, py = 0;
+        for (int i = 1; i <= SEG; i++) {
+            float f = i / (float) SEG, x = len * f, y = Mth.sin(f * 9F + phase) * amp * Mth.sin(f * Mth.PI);
+            int c = mix(c0, c1, f);
+            if (pass == BODY) line(b, p, px, py, x, y, w * 1.6F, c, .7F * a);
+            else line(b, p, px, py, x, y, w * .6F, mix(c, WHITE, .4F), .8F * a);
+            px = x; py = y;
+        }
+    }
+
+    /** A tapering streak along the x axis, widest and brightest at the far end (a thrust or dash). */
+    public static void streak(VertexConsumer b, PoseStack.Pose p, int pass, float len, float w, int c0, int c1, float a) {
+        final int SEG = 8;
+        for (int i = 0; i < SEG; i++) {
+            float f0 = i / (float) SEG, f1 = (i + 1) / (float) SEG;
+            float w0 = w * (.15F + .85F * f0), w1 = w * (.15F + .85F * f1);
+            float a0 = a * f0, a1 = a * f1;
+            int k0 = mix(c0, c1, f0), k1 = mix(c0, c1, f1);
+            if (pass == GLOW) { w0 *= .4F; w1 *= .4F; k0 = mix(k0, WHITE, .4F); k1 = mix(k1, WHITE, .4F); }
+            float x0 = len * f0, x1 = len * f1;
+            quad(b, p, x0, -w0, k0, 0, x0, 0, k0, a0, x1, 0, k1, a1, x1, -w1, k1, 0);
+            quad(b, p, x0, 0, k0, a0, x0, w0, k0, 0, x1, w1, k1, 0, x1, 0, k1, a1);
+        }
+    }
+
+    /**
+     * A slash crescent around the origin from angle {@code from} to {@code to} (radians), brightest along the outer edge
+     * and at the leading end ({@code to}), fading toward the trailing end.
+     */
+    public static void crescent(VertexConsumer b, PoseStack.Pose p, int pass, float r, float from, float to, int c0, int c1, float a) {
+        if (to <= from) return;
+        int n = Math.max(4, (int) ((to - from) / .12F));
+        float[] rad = pass == BODY ? new float[] {.45F, .8F, 1F, 1.07F} : new float[] {.75F, .93F, 1.0F, 1.03F};
+        float[] al = pass == BODY ? new float[] {0F, .6F, 1F, 0F} : new float[] {0F, .7F, 1F, 0F};
+        for (int i = 0; i < n; i++) {
+            float t0 = i / (float) n, t1 = (i + 1) / (float) n;
+            float g0 = from + (to - from) * t0, g1 = from + (to - from) * t1;
+            float lead0 = (float) Math.pow(.2F + .8F * t0, 1.3) * a, lead1 = (float) Math.pow(.2F + .8F * t1, 1.3) * a;
+            int k0 = mix(c1, c0, t0), k1 = mix(c1, c0, t1);
+            if (pass == GLOW) { k0 = mix(k0, WHITE, .45F); k1 = mix(k1, WHITE, .45F); }
+            float cs0 = Mth.cos(g0), sn0 = Mth.sin(g0), cs1 = Mth.cos(g1), sn1 = Mth.sin(g1);
+            for (int j = 0; j < 3; j++) {
+                float ra = r * rad[j], rb = r * rad[j + 1];
+                quad(b, p, cs0 * ra, sn0 * ra, k0, al[j] * lead0, cs0 * rb, sn0 * rb, k0, al[j + 1] * lead0,
+                        cs1 * rb, sn1 * rb, k1, al[j + 1] * lead1, cs1 * ra, sn1 * ra, k1, al[j] * lead1);
+            }
+        }
+    }
+
+    /** Rays bursting out from the centre (Sun-style hits). */
+    public static void burstRays(VertexConsumer b, PoseStack.Pose p, int n, float r0, float len, float w, int c, float a, float spin) {
+        for (int i = 0; i < n; i++) {
+            float ang = i * Mth.TWO_PI / n + spin, co = Mth.cos(ang), si = Mth.sin(ang);
+            float l = len * ((i & 1) == 1 ? .65F : 1F);
+            tri(b, p, co * r0 - si * w, si * r0 + co * w, c, a, co * r0 + si * w, si * r0 - co * w, c, a, co * l, si * l, c, 0F);
+        }
+    }
+
     /**
      * A ribbon of script standing upright around the head, centred on the pose origin (blocks). Draw it with
      * {@link FlameRenderTypes#SCRIPT}.

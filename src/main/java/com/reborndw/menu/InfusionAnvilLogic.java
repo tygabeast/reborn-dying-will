@@ -30,7 +30,7 @@ public final class InfusionAnvilLogic {
         if (old != null && old.flame() == flame && old.grade() == rank) return ItemStack.EMPTY; // nothing would change
         ItemStack out = item.copy();
         out.set(ModRegistry.INFUSION.get(), new Infusion(flame, rank));
-        out.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+        out.remove(DataComponents.ENCHANTMENT_GLINT_OVERRIDE); // the flame's own glint shows while the infusion is live
         return out;
     }
 

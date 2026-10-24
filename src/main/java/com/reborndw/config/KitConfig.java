@@ -47,6 +47,8 @@ public final class KitConfig {
     public static final ModConfigSpec.DoubleValue FLAME_ARROW_DAMAGE, FLAME_ROUND_DAMAGE, FIST_BASE_DAMAGE;
     public static final ModConfigSpec.DoubleValue STORM_DECAY_DAMAGE, SUN_FIST_HEAL, SUN_MELEE_HEAL, SKY_ALLY_REGEN;
     public static final ModConfigSpec.DoubleValue LIGHTNING_ARMOR_TOUGHNESS, LIGHTNING_ARMOR_TOUGHNESS_PER_RANK;
+    public static final ModConfigSpec.IntValue SHIELD_SKY_ABSORB_SECONDS, SHIELD_RAIN_STACKS;
+    public static final ModConfigSpec.DoubleValue SHIELD_SKY_RANGE, SHIELD_STORM_ARMOR_WEAR, SHIELD_SUN_HEAL, SHIELD_CLOUD_ECHO, SHIELD_MIST_DAZE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -144,6 +146,16 @@ public final class KitConfig {
         SKY_ALLY_REGEN = b.comment("Share of capacity restored to allied players within 6 blocks when a Sky-infused hit lands.").defineInRange("skyAllyRegen", 0.01, 0.0, 1.0);
         LIGHTNING_ARMOR_TOUGHNESS = b.comment("Armor toughness per Lightning-infused armor piece at E.").defineInRange("lightningArmorToughness", 0.5, 0.0, 100.0);
         LIGHTNING_ARMOR_TOUGHNESS_PER_RANK = b.defineInRange("lightningArmorToughnessPerRank", 0.1, 0.0, 100.0);
+        b.pop();
+
+        b.comment("What an infused shield does when it blocks a hit (Lightning sends projectiles back).").push("shieldBlock");
+        SHIELD_SKY_ABSORB_SECONDS = b.comment("Sky: seconds of Absorption I given to you and allies nearby on a block.").defineInRange("skyAbsorptionSeconds", 8, 0, 600);
+        SHIELD_SKY_RANGE = b.comment("Sky: how far the absorption reaches, in blocks.").defineInRange("skyRange", 6.0, 0.0, 32.0);
+        SHIELD_STORM_ARMOR_WEAR = b.comment("Storm: durability taken from a melee attacker's armor (each piece) per point of damage blocked.").defineInRange("stormArmorWear", 2.0, 0.0, 100.0);
+        SHIELD_RAIN_STACKS = b.comment("Rain: Tranquility stacks put on a melee attacker.").defineInRange("rainStacks", 1, 0, 10);
+        SHIELD_SUN_HEAL = b.comment("Sun: share of the blocked damage healed.").defineInRange("sunHeal", 0.3, 0.0, 10.0);
+        SHIELD_CLOUD_ECHO = b.comment("Cloud: share of the blocked damage echoed back on a melee attacker a moment later.").defineInRange("cloudEcho", 0.5, 0.0, 10.0);
+        SHIELD_MIST_DAZE = b.comment("Mist: chance a melee attacker is dazed by an illusion (confused).").defineInRange("mistDazeChance", 0.6, 0.0, 1.0);
         b.pop();
 
         SPEC = b.build();

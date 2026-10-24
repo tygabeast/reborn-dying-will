@@ -40,7 +40,7 @@ public class FlameShotRenderer extends EntityRenderer<FlameShotEntity> {
         pose.pushPose();
         pose.translate(0F, e.getBbHeight() * .5F, 0F);
         pose.mulPose(cam);
-        float s = look.sz / 48F;
+        float s = look.sz * e.size() / 48F;
         pose.scale(s, s, s);
         float sec = (e.tickCount + partial) / 20F;
         boolean compat = FlameRenderTypes.compat();

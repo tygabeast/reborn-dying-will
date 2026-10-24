@@ -86,7 +86,7 @@ public final class DevShots {
         String[] a = PLAN.get(index).a();
         hold(mc, a);
         if (++ticks >= settle) {
-            if (a[0].equals("head") || a[0].equals("shot") || a[0].equals("inv")) {
+            if (a[0].equals("head") || a[0].equals("shot") || a[0].equals("inv") || a[0].equals("fx")) {
                 String name = String.join("_", a).replace('.', 'p') + ".png";
                 Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), m -> {});
             }
@@ -105,14 +105,19 @@ public final class DevShots {
 
     private static void hold(Minecraft mc, String[] a) {
         if (a[0].equals("inv")) return;
-        if (!a[0].equals("head") && !a[0].equals("shot")) return;
+        boolean isFx = a[0].equals("fx");
+        if (!a[0].equals("head") && !a[0].equals("shot") && !isFx) return;
         boolean isShot = a[0].equals("shot");
         int o = isShot ? 2 : 3;
-        float yaw = Float.parseFloat(a[o]), elev = Float.parseFloat(a[o + 1]), dist = Float.parseFloat(a[o + 2]);
+        float yaw = isFx ? 25 : Float.parseFloat(a[o]), elev = isFx ? 12 : Float.parseFloat(a[o + 1]), dist = isFx ? 4.2F : Float.parseFloat(a[o + 2]);
         float headPitch = 0;
         for (String s : a) if (s.startsWith("pitch=")) headPitch = Float.parseFloat(s.substring(6));
         place(dummy, base, 0F, headPitch);
-        Vec3 target = isShot ? base.add(0, 1.6, 1.5) : base.add(0, 1.8, 0.2);
+        Vec3 target = isFx ? base.add(0, 1.2, 1.2) : isShot ? base.add(0, 1.6, 1.5) : base.add(0, 1.8, 0.2);
+        for (String opt : a) if (opt.startsWith("at=")) {
+            String[] v = opt.substring(3).split(",");
+            target = base.add(Double.parseDouble(v[0]), Double.parseDouble(v[1]), Double.parseDouble(v[2]));
+        }
         if (isShot) shot.setPos(target.x, target.y, target.z);
         double yr = Math.toRadians(yaw), er = Math.toRadians(elev);
         // the dummy faces +z; yaw 0 puts the camera in front of its face
@@ -151,6 +156,14 @@ public final class DevShots {
                 fd.active = Flame.valueOf(a[1]);
                 fd.form = Form.valueOf(a[2]);
                 ClientFlameCache.put(dummy.getId(), fd);
+                fd.awakened = true;
+                ItemStack held = ItemStack.EMPTY;
+                for (String o : a) if (o.startsWith("item=")) {
+                    held = new ItemStack(Items.DIAMOND_SWORD);
+                    if (o.equals("item=ENCH")) held.set(net.minecraft.core.component.DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+                    else held.set(ModRegistry.INFUSION.get(), new com.reborndw.infusion.Infusion(Flame.valueOf(o.substring(5)), com.reborndw.flame.Rank.B));
+                }
+                dummy.setItemSlot(EquipmentSlot.MAINHAND, held);
                 boolean helmet = List.of(a).contains("helmet");
                 dummy.setItemSlot(EquipmentSlot.HEAD, helmet ? new ItemStack(Items.IRON_HELMET) : ItemStack.EMPTY);
                 if (List.of(a).contains("night")) server(mc, "time set 18000"); else server(mc, "time set 6000");
@@ -165,11 +178,35 @@ public final class DevShots {
                 shot.setPos(base.x, base.y + 1.6, base.z + 1.5);
                 mc.level.addEntity(shot);
             }
+            case "fx" -> {
+                ClientFlameCache.put(dummy.getId(), new FlameData());
+                Flame f = Flame.valueOf(a[2]);
+                int kind = switch (a[1]) { case "HIT" -> 0; case "BOLT" -> 1; case "SLASH" -> 2; case "THRUST" -> 3; case "SLAM" -> 4;
+                    case "TETHER" -> 5; case "CHARGE" -> 6; case "SHIELD" -> 7; case "BURST" -> 8; default -> 9; };
+                MinecraftServer srv = mc.getSingleplayerServer();
+                Vec3 c = base.add(0, 1.2, 1.2);
+                srv.execute(() -> {
+                    var lvl = srv.overworld();
+                    switch (kind) {
+                        case 1, 5 -> com.reborndw.fx.FlameFx.send(lvl, kind, f, c.add(-1.4, .2, 0), c.add(1.4, -.2, 0), 1F, 0);
+                        case 3 -> com.reborndw.fx.FlameFx.send(lvl, kind, f, c.add(-1.6, 0, -.5), c.add(1.6, 0, .5), 1F, 0);
+                        case 2 -> com.reborndw.fx.FlameFx.send(lvl, kind, f, c.add(0, -.2, -1.2), new Vec3(0, 0, 1), 2F, 110 | ((-25 + 180) << 10));
+                        case 4 -> com.reborndw.fx.FlameFx.send(lvl, kind, f, base.add(0, 0, 1.2), Vec3.ZERO, 2.5F, 0);
+                        case 7 -> com.reborndw.fx.FlameFx.send(lvl, kind, f, c, new Vec3(0, 0, 1), 1.2F, 0);
+                        default -> com.reborndw.fx.FlameFx.send(lvl, kind, f, c, Vec3.ZERO, 1.2F, 0);
+                    }
+                });
+                settle = a.length > 3 ? Integer.parseInt(a[3]) : 4;
+            }
+            case "cmd" -> { server(mc, String.join(" ", java.util.Arrays.copyOfRange(a, 1, a.length))); settle = 10; }
             case "inv" -> {
-                FlameData fd = new FlameData();
-                fd.active = Flame.valueOf(a[1]);
-                fd.form = Form.valueOf(a[2]);
-                ClientFlameCache.put(mc.player.getId(), fd);
+                if (!a[1].equals("real")) {
+                    FlameData fd = new FlameData();
+                    fd.awakened = true;
+                    fd.active = Flame.valueOf(a[1]);
+                    fd.form = Form.valueOf(a[2]);
+                    ClientFlameCache.put(mc.player.getId(), fd);
+                }
                 mc.options.hideGui = false;
                 server(mc, "gamemode adventure Dev");
                 settle = 50;

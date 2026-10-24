@@ -20,9 +20,15 @@ public final class ClientEvents {
     private ClientEvents() {}
 
     @SubscribeEvent
+    public static void renderFx(net.neoforged.neoforge.client.event.RenderLevelStageEvent event) {
+        com.reborndw.client.fx.FxManager.render(event);
+    }
+
+    @SubscribeEvent
     public static void tick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
+        if (!mc.isPaused()) com.reborndw.client.fx.FxManager.tick();
         hold(ClientSetup.PRIMARY, ActionPayload.Action.PRIMARY, 0);
         hold(ClientSetup.SECONDARY, ActionPayload.Action.SECONDARY, 1);
         hold(ClientSetup.SIGNATURE, ActionPayload.Action.SIGNATURE, 2);
@@ -76,19 +82,22 @@ public final class ClientEvents {
         while (key.consumeClick()) PacketDistributor.sendToServer(new ActionPayload(action));
     }
 
-    /** Infused items say what they carry. */
+    /** Infused items say what they carry, and whether it is working right now. */
     @SubscribeEvent
     public static void tooltip(net.neoforged.neoforge.event.entity.player.ItemTooltipEvent event) {
         var inf = event.getItemStack().get(com.reborndw.registry.ModRegistry.INFUSION.get());
         if (inf == null) return;
         var name = net.minecraft.network.chat.Component.translatable(inf.flame().translationKey()).withColor(inf.flame().color);
         event.getToolTip().add(1, net.minecraft.network.chat.Component.translatable("tooltip.reborn_dying_will.infused", name, inf.grade().name()));
-        event.getToolTip().add(2, net.minecraft.network.chat.Component.translatable("tooltip.reborn_dying_will.infused_note", name)
-                .withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
+        boolean live = InfusionGlint.live(event.getItemStack(), event.getEntity()) == inf.flame();
+        event.getToolTip().add(2, live
+                ? net.minecraft.network.chat.Component.translatable("tooltip.reborn_dying_will.infused_live").withStyle(net.minecraft.ChatFormatting.GREEN)
+                : net.minecraft.network.chat.Component.translatable("tooltip.reborn_dying_will.infused_note", name).withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
     }
 
     @SubscribeEvent
     public static void logout(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientFlameCache.clear();
+        com.reborndw.client.fx.FxManager.clear();
     }
 }

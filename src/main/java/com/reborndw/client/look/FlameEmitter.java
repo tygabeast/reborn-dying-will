@@ -16,7 +16,7 @@ public final class FlameEmitter {
     private FlameEmitter() {}
 
     /** 1 for all particles, less when the player has turned particles down. */
-    private static float density(Minecraft mc) {
+    public static float density(Minecraft mc) {
         float d = (float) (double) ClientConfig.FLAME_DENSITY.get();
         ParticleStatus s = mc.options.particles().get();
         return s == ParticleStatus.ALL ? d : s == ParticleStatus.DECREASED ? d * .45F : d * .15F;
@@ -92,5 +92,19 @@ public final class FlameEmitter {
         int c0 = e.c0 != 0 ? e.c0 : L.core, c1 = e.c1 != 0 ? e.c1 : L.edge;
         int life = Math.max(2, Math.round(between(r, e.lifeLo, e.lifeHi) * 20F));
         mc.level.addParticle(new MoteOptions(e.kind, c0, c1, e.size * k, life, e.flags), x, y, z, vx, vy, vz);
+    }
+
+    /** A burst of a flame's motes flying out from a point (for hits and other effects). {@code speed} in blocks per tick. */
+    public static void burst(Minecraft mc, FlameLook L, Vec3 at, int count, float speed) {
+        if (L.head.isEmpty() || mc.level == null) return;
+        int n = Math.round(count * density(mc));
+        RandomSource r = mc.level.random;
+        float k = U * 1.2F;
+        for (int i = 0; i < n; i++) {
+            FlameLook.Emit e = L.head.get(i % L.head.size());
+            double vx = r.nextGaussian(), vy = r.nextGaussian(), vz = r.nextGaussian();
+            double len = Math.sqrt(vx * vx + vy * vy + vz * vz) + 1e-6, sp = speed * (.4 + .6 * r.nextDouble()) / len;
+            emit(mc, e, L, k, at.x, at.y, at.z, vx * sp, vy * sp + speed * .3, vz * sp, r);
+        }
     }
 }

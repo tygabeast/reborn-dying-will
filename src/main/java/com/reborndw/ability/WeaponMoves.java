@@ -9,9 +9,8 @@ import com.reborndw.infusion.InfusionHelper;
 import com.reborndw.infusion.WeaponCategory;
 import com.reborndw.network.ActionPayload;
 import com.reborndw.registry.ModRegistry;
+import com.reborndw.fx.FlameFx;
 import com.reborndw.util.DelayedTasks;
-import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -72,9 +71,11 @@ public final class WeaponMoves {
         }
         float base = cat == WeaponCategory.HEAVY ? attack(player) : fistDamage(player, s);
         float dmg = (float) (base * (1.5 + 1.5 * charge) * s.strength());
+        player.swing(s.hand(), true);
         hit(player, s, t, dmg);
         InfusionEffectsBridge.knock(player, t, 0.6 + charge);
-        burst(player.serverLevel(), s.flame(), t.position().add(0, t.getBbHeight() / 2, 0), 12, 0.4);
+        if (cat == WeaponCategory.HEAVY) FlameFx.slam(player.serverLevel(), s.flame(), t.position(), 1.5 + 1.5 * charge);
+        else FlameFx.burst(player.serverLevel(), s.flame(), t.position().add(0, t.getBbHeight() / 2, 0), (float) (1 + charge));
         sound(player, cat == WeaponCategory.HEAVY ? SoundEvents.MACE_SMASH_GROUND_HEAVY : SoundEvents.PLAYER_ATTACK_STRONG, 1.0F);
         return true;
     }
@@ -85,10 +86,7 @@ public final class WeaponMoves {
         if (d.braceTicks > 0) d.braceTicks--;
         if (d.chargeCategory != null) {
             if (d.chargeTicks < MAX_CHARGE) d.chargeTicks++;
-            if (d.chargeTicks % 5 == 0 && d.active != null) {
-                Vec3 hand = player.position().add(0, 1.0, 0).add(player.getLookAngle().scale(0.8));
-                player.serverLevel().sendParticles(dust(d.active, 0.8F), hand.x, hand.y, hand.z, 2, 0.15, 0.15, 0.15, 0);
-            }
+            if (d.chargeTicks % 5 == 0 && d.active != null) FlameFx.charge(player, d.active, d.chargeTicks / (double) MAX_CHARGE);
         }
     }
 
@@ -96,10 +94,11 @@ public final class WeaponMoves {
 
     private static void primary(ServerPlayer player, FlameData d, InfusionHelper.Source s) {
         ServerLevel level = player.serverLevel();
+        player.swing(s.hand(), true);
         switch (s.category()) {
             case BLADE -> { // flame slash arc
                 for (LivingEntity e : cone(player, 4.0, 50)) hit(player, s, e, attack(player) * (float) s.strength());
-                arc(level, player, s.flame(), 3.0, 100);
+                FlameFx.slash(player, s.flame(), 3.0, 110, -25);
                 sound(player, SoundEvents.PLAYER_ATTACK_SWEEP, 1.0F);
             }
             case HEAVY -> { // ground slam
@@ -108,13 +107,12 @@ public final class WeaponMoves {
                     e.push(0, 0.5, 0);
                     e.hurtMarked = true;
                 }
-                Kits.circle(level, player.position().add(0, 0.1, 0), 3.0, dust(s.flame(), 1.2F), 24);
-                level.sendParticles(ParticleTypes.EXPLOSION, player.getX(), player.getY() + 0.1, player.getZ(), 1, 0, 0, 0, 0);
+                FlameFx.slam(level, s.flame(), player.position(), 3.0);
                 sound(player, SoundEvents.MACE_SMASH_GROUND, 1.0F);
             }
             case POLEARM -> { // piercing thrust line
                 for (LivingEntity e : line(player, 6.0, 1.0)) hit(player, s, e, attack(player) * (float) s.strength());
-                trail(level, player, s.flame(), 6.0);
+                FlameFx.thrust(player, s.flame(), 6.0, 1F);
                 sound(player, SoundEvents.TRIDENT_THROW.value(), 1.2F);
             }
             case SHORT -> { // strike flurry: four quick hits
@@ -122,11 +120,13 @@ public final class WeaponMoves {
                 if (t == null) { sound(player, SoundEvents.PLAYER_ATTACK_NODAMAGE, 1.0F); return; }
                 float dmg = attack(player) * 0.4F * (float) s.strength();
                 for (int i = 0; i < 4; i++) {
+                    final int n = i;
                     DelayedTasks.schedule(i * 2, () -> {
                         if (!t.isAlive() || player.isRemoved()) return;
                         t.invulnerableTime = 0;
+                        if (n > 0) player.swing(n % 2 == 0 ? s.hand() : other(s.hand()), true);
                         hit(player, s, t, dmg);
-                        level.sendParticles(dust(s.flame(), 0.8F), t.getX(), t.getY() + t.getBbHeight() * 0.6, t.getZ(), 3, 0.2, 0.2, 0.2, 0);
+                        FlameFx.slash(player, s.flame(), 1.6, 70, n % 2 == 0 ? -40 : 40);
                         sound(player, SoundEvents.PLAYER_ATTACK_WEAK, 1.4F);
                     });
                 }
@@ -138,25 +138,27 @@ public final class WeaponMoves {
                 Vec3 pull = player.position().subtract(t.position()).normalize().scale(1.2);
                 t.push(pull.x, 0.3, pull.z);
                 t.hurtMarked = true;
-                tether(level, player, t, s.flame());
+                FlameFx.tether(level, s.flame(), player, t);
                 sound(player, SoundEvents.FISHING_BOBBER_RETRIEVE, 1.4F);
             }
-            case BOW -> shoot(player, s, 0, 3.0, KitConfig.FLAME_ARROW_DAMAGE.get(), 32);
+            case BOW -> { shoot(player, s, 0, 3.0, KitConfig.FLAME_ARROW_DAMAGE.get(), 32); FlameFx.muzzle(player, s.flame()); }
             case GUN -> {
                 shoot(player, s, 0, 4.0, KitConfig.FLAME_ROUND_DAMAGE.get(), 48);
+                FlameFx.muzzle(player, s.flame());
                 sound(player, SoundEvents.FIREWORK_ROCKET_BLAST, 1.6F);
             }
             case SHIELD -> { // brace: blocks frontal hits and sends projectiles back
                 d.braceTicks = 40;
                 sound(player, SoundEvents.SHIELD_BLOCK, 0.8F);
-                arc(level, player, s.flame(), 1.4, 120);
+                FlameFx.shield(player, s.flame(), 1.2F);
             }
             case FISTS -> { // flame punch
                 LivingEntity t = target(player, 3.5, 30);
                 if (t == null) { sound(player, SoundEvents.PLAYER_ATTACK_NODAMAGE, 1.0F); return; }
                 hit(player, s, t, fistDamage(player, s));
                 InfusionEffectsBridge.knock(player, t, s.flame() == Flame.SUN ? 1.2 : 0.8);
-                burst(level, s.flame(), t.position().add(0, t.getBbHeight() * 0.6, 0), 8, 0.3);
+                FlameFx.thrust(player, s.flame(), Math.min(3.0, player.distanceTo(t)), .6F);
+                FlameFx.burst(level, s.flame(), t.position().add(0, t.getBbHeight() * 0.6, 0), 1F);
                 sound(player, SoundEvents.PLAYER_ATTACK_KNOCKBACK, 1.0F);
             }
         }
@@ -166,18 +168,19 @@ public final class WeaponMoves {
 
     private static void secondary(ServerPlayer player, FlameData d, InfusionHelper.Source s) {
         ServerLevel level = player.serverLevel();
+        player.swing(s.hand(), true);
         switch (s.category()) {
             case BLADE -> { // counter stance: the next melee hit within a second is turned back
                 d.counterTicks = 20;
                 sound(player, SoundEvents.ARMOR_EQUIP_IRON.value(), 1.4F);
-                arc(level, player, s.flame(), 1.2, 160);
+                FlameFx.shield(player, s.flame(), .9F);
             }
             case POLEARM -> { // sweeping spin
                 for (LivingEntity e : Kits.enemiesAround(player, player.position().add(0, 1, 0), 3.5)) {
                     hit(player, s, e, attack(player) * 0.8F * (float) s.strength());
                     InfusionEffectsBridge.knock(player, e, 0.8);
                 }
-                arc(level, player, s.flame(), 3.0, 360);
+                FlameFx.slash(player, s.flame(), 3.0, 360, 0);
                 sound(player, SoundEvents.PLAYER_ATTACK_SWEEP, 0.8F);
             }
             case SHORT -> { // dash strike
@@ -185,30 +188,33 @@ public final class WeaponMoves {
                 for (LivingEntity e : line(player, 5.0, 1.2)) hit(player, s, e, attack(player) * 1.2F * (float) s.strength());
                 player.setDeltaMovement(look.scale(1.6).add(0, 0.15, 0));
                 player.hurtMarked = true;
-                trail(level, player, s.flame(), 5.0);
+                FlameFx.thrust(player, s.flame(), 5.0, 1.2F);
                 sound(player, SoundEvents.PLAYER_ATTACK_SWEEP, 1.6F);
             }
             case WHIP -> { // bind that roots the target (Cloud: the bind spreads to a second enemy)
                 LivingEntity t = lineTarget(player, 8.0);
                 if (t == null) { sound(player, SoundEvents.PLAYER_ATTACK_NODAMAGE, 1.0F); return; }
                 bind(player, s, t);
-                tether(level, player, t, s.flame());
+                FlameFx.tether(level, s.flame(), player, t);
+                FlameFx.slam(level, s.flame(), t.position(), .9);
                 if (s.flame() == Flame.CLOUD) {
                     level.getEntitiesOfClass(LivingEntity.class, t.getBoundingBox().inflate(4),
                                     e -> e != t && e != player && e.isAlive() && !SkyAbilities.isAlly(player, e))
                             .stream().min(Comparator.comparingDouble(e -> e.distanceToSqr(t)))
-                            .ifPresent(second -> { bind(player, s, second); tether(level, t, second, s.flame()); });
+                            .ifPresent(second -> { bind(player, s, second); FlameFx.tether(level, s.flame(), t, second); FlameFx.slam(level, s.flame(), second.position(), .9); });
                 }
                 sound(player, SoundEvents.CHAIN_PLACE, 1.0F);
             }
             case BOW -> { // spread shot
                 for (int i = -2; i <= 2; i++) shoot(player, s, i * 10, 3.0, KitConfig.FLAME_ARROW_DAMAGE.get() * 0.7, 24);
+                FlameFx.muzzle(player, s.flame());
             }
             case GUN -> { // burst fire
                 for (int i = 0; i < 3; i++) {
                     DelayedTasks.schedule(i * 3, () -> {
                         if (player.isRemoved()) return;
                         shoot(player, s, 0, 4.0, KitConfig.FLAME_ROUND_DAMAGE.get() * 0.8, 48);
+                        FlameFx.muzzle(player, s.flame());
                         sound(player, SoundEvents.FIREWORK_ROCKET_BLAST, 1.8F);
                     });
                 }
@@ -217,6 +223,8 @@ public final class WeaponMoves {
                 Vec3 look = player.getLookAngle().multiply(1, 0, 1).normalize();
                 player.setDeltaMovement(look.scale(1.3).add(0, 0.1, 0));
                 player.hurtMarked = true;
+                FlameFx.shield(player, s.flame(), 1.1F);
+                FlameFx.thrust(player, s.flame(), 3.0, 1.4F);
                 float dmg = Math.max(4F, attack(player)) * 0.6F * (float) s.strength();
                 for (LivingEntity e : cone(player, 3.0, 60)) {
                     hit(player, s, e, dmg);
@@ -226,7 +234,7 @@ public final class WeaponMoves {
                     for (LivingEntity e : Kits.enemiesAround(player, player.position().add(0, 1, 0), 4.0)) {
                         e.invulnerableTime = 0;
                         FlameDamage.deal(player, e, Flame.LIGHTNING, dmg * 0.5F, s.eff(), FlameDamage.NO_CHAIN);
-                        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, e.getX(), e.getY() + 1, e.getZ(), 8, 0.3, 0.4, 0.3, 0.05);
+                        FlameFx.bolt(level, Flame.LIGHTNING, player, e);
                     }
                 }
                 sound(player, SoundEvents.SHIELD_BLOCK, 0.6F);
@@ -298,40 +306,8 @@ public final class WeaponMoves {
         return line(player, length, 1.2).stream().min(Comparator.comparingDouble(e -> e.distanceToSqr(player))).orElse(null);
     }
 
-    private static DustParticleOptions dust(Flame f, float size) {
-        return new DustParticleOptions(SkyAbilities.rgb(f.color), size);
-    }
-
-    /** A horizontal arc in front of the player, below eye level so it doesn't block the view. */
-    private static void arc(ServerLevel level, ServerPlayer player, Flame f, double radius, double degrees) {
-        double yaw = Math.toRadians(player.getYRot() + 90);
-        int points = (int) Math.max(8, degrees / 8);
-        for (int i = 0; i <= points; i++) {
-            double a = yaw + Math.toRadians(-degrees / 2 + degrees * i / points);
-            level.sendParticles(dust(f, 1.0F), player.getX() + Math.cos(a) * radius, player.getY() + 1.0, player.getZ() + Math.sin(a) * radius, 1, 0, 0, 0, 0);
-        }
-    }
-
-    private static void trail(ServerLevel level, ServerPlayer player, Flame f, double length) {
-        Vec3 a = player.getEyePosition().add(0, -0.4, 0);
-        Vec3 look = player.getLookAngle();
-        for (double t = 1.2; t <= length; t += 0.4) {
-            Vec3 p = a.add(look.scale(t));
-            level.sendParticles(dust(f, 0.9F), p.x, p.y, p.z, 1, 0, 0, 0, 0);
-        }
-    }
-
-    private static void tether(ServerLevel level, LivingEntity from, LivingEntity to, Flame f) {
-        Vec3 a = from.position().add(0, from.getBbHeight() * 0.6, 0), b = to.position().add(0, to.getBbHeight() * 0.6, 0);
-        int steps = (int) Math.max(4, a.distanceTo(b) * 3);
-        for (int i = 1; i < steps; i++) {
-            Vec3 p = a.lerp(b, i / (double) steps);
-            level.sendParticles(dust(f, 0.6F), p.x, p.y, p.z, 1, 0, 0, 0, 0);
-        }
-    }
-
-    private static void burst(ServerLevel level, Flame f, Vec3 at, int count, double spread) {
-        level.sendParticles(dust(f, 1.1F), at.x, at.y, at.z, count, spread, spread, spread, 0);
+    private static net.minecraft.world.InteractionHand other(net.minecraft.world.InteractionHand h) {
+        return h == net.minecraft.world.InteractionHand.MAIN_HAND ? net.minecraft.world.InteractionHand.OFF_HAND : net.minecraft.world.InteractionHand.MAIN_HAND;
     }
 
     private static void sound(ServerPlayer player, net.minecraft.sounds.SoundEvent sound, float pitch) {

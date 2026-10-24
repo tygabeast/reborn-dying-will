@@ -1,10 +1,10 @@
-# Reborn - Dying Will (0.3.4)
+# Reborn - Dying Will (0.4.0)
 
 NeoForge 21.1 / Minecraft 1.21.1. Requires Curios (9.x for 1.21.1).
 
 Milestone 1 laid the foundation: the flame system, the Dying Will form ladder, Flame Gems, the basic resonator
 and Sky's ring kit. Milestone 2 (0.2.0) added the other six Sky-set flames' ring kits, the Ring Forge and flame pills.
-0.3.4 polishes the flame looks (below): shader-pack exceptions, script band placement, inventory view. Milestone 3 (0.3.0) added flame infusion: the Infuse toggle, the Infusion Anvil and infused weapon moves.
+0.4.0 finishes the graphics pass: flame-coloured infusion glints, weapon move and hit effects, and infused shields' on-block effects (below). Milestone 3 (0.3.0) added flame infusion: the Infuse toggle, the Infusion Anvil and infused weapon moves.
 Every number is a placeholder in the server config files `reborn_dying_will-server.toml` and `reborn_dying_will-kits.toml`.
 
 ## What's in it
@@ -167,6 +167,27 @@ Illusion Realm, Hallucination), gloves, Storm/Cloud-infused tools' mining effect
   vanilla entity render types (the glow goes through the same program as spider eyes), which shader packs are written
   to handle. ALWAYS/NEVER force one path so you can compare per pack. "Shader pack exceptions" lists packs (any part
   of the file name) that AUTO keeps on the normal path; MakeUp is listed by default.
+
+### 0.4.0 changes
+- **Infusion glint:** infused items shimmer in their flame's colour only while the infusion is live for whoever holds
+  them (their active flame matches, or the Infuse toggle lends it); dormant items show no glint (unless enchanted).
+  Slots show a small flame mark, coloured when live and grey when dormant, and the tooltip says Live or Dormant.
+  New infusions no longer force the vanilla enchantment glint. (Drawn through a small optional mixin on the item
+  renderer; if it ever fails to apply, items simply keep vanilla glints.)
+- **Flame effects:** a new effect packet draws, in each flame's colours and style: slash crescents (blade, polearm
+  spin, short-blade flurry), thrust and dash streaks, slam rings (heavy, charged strikes, binds), whip tethers,
+  shield barriers (brace, blade counter, shield bash, blocks), charge glow in the hand, muzzle flashes, and a hit mark on
+  every flame hit (Sky star, Storm cross, Rain ripple, Sun rays, Lightning green bolts, Cloud echo rings, Mist swirl,
+  Night collapse; Earth-set flames use their counterpart's mark). Lightning chains are green arcs. Weapon moves swing
+  the arm. One small packet per effect, to players within 48 blocks; the client keeps at most 192 effects alive.
+- **Infused shields on block:** Sky gives you and allies within 6 blocks Absorption I for 8 s; Storm wears a melee
+  attacker's armor (2 durability per point blocked); Rain puts a Tranquility stack on them; Sun heals 30% of the
+  blocked damage; Lightning still sends projectiles back; Cloud echoes 50% of the blocked damage onto the attacker;
+  Mist has a 60% chance to daze them (confuse). All in `reborn_dying_will-kits.toml` under `shieldBlock`.
+- Flame shots now use their size (Sun's are smaller).
+- Script bands sit halfway between the brow and the flame's middle.
+- Cleanup: removed the old dust-particle move visuals and their helpers, the white electric-spark chain arcs, the dust
+  echo and witch confuse particles (all replaced by flame effects), and unused imports. No ids or items changed.
 
 ### 0.3.4 changes
 - Shader pack exceptions list (default: MakeUp), since MakeUp looks worse on the shader-pack path.

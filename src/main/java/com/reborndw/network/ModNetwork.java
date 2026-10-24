@@ -13,6 +13,8 @@ public final class ModNetwork {
         PayloadRegistrar r = event.registrar("1");
         r.playToClient(FlameSyncPayload.TYPE, FlameSyncPayload.CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> ClientPayloadHandler.handleSync(payload)));
+        r.playToClient(FlameFxPayload.TYPE, FlameFxPayload.CODEC,
+                (payload, ctx) -> ctx.enqueueWork(() -> ClientPayloadHandler.handleFx(payload)));
         r.playToServer(ActionPayload.TYPE, ActionPayload.CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> {
                     if (ctx.player() instanceof ServerPlayer sp) AbilityHandler.handle(sp, payload.action(), payload.pressed());

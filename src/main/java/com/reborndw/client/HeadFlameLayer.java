@@ -29,6 +29,7 @@ public class HeadFlameLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
     /** Where the flame's base sits in head space, in blocks: up from the neck pivot, and forward of it. */
     public static final float BROW_UP = 0.375F, BROW_FORWARD = 0.35F;
     private static final float U = 1F / 48F;
+    private static final float OLD_BAND_HEIGHT = 0.27F;
     private static final Matrix4f INV = new Matrix4f();
     private static final Vector3f CAM = new Vector3f();
 
@@ -70,7 +71,7 @@ public class HeadFlameLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
         pose.popPose();
     }
 
-    /** Bands of script circling the head at the height of the flame's middle, wide enough to clear a helmet's corners. */
+    /** Bands of script circling the head, between the brow and the flame's middle, wide enough to clear a helmet's corners. */
     private static void rings(PoseStack pose, MultiBufferSource buffers, FlameLook L, boolean calm, float sec, float height) {
         boolean compat = FlameRenderTypes.compat();
         var vc = buffers.getBuffer(compat ? FlameRenderTypes.SCRIPT_COMPAT : FlameRenderTypes.SCRIPT);
@@ -80,7 +81,7 @@ public class HeadFlameLayer extends RenderLayer<AbstractClientPlayer, PlayerMode
         int color = FlameMesh.mix(L.core, L.edge, .5F);
         for (int i = 0; i < n; i++) {
             pose.pushPose();
-            pose.translate(0F, -height, 0F);
+            pose.translate(0F, -(OLD_BAND_HEIGHT + height) * .5F, 0F); // halfway between 0.3.3's height and the flame's middle
             if (n > 1) pose.mulPose(Axis.ZP.rotation(i == 0 ? .28F : -.28F));
             else pose.mulPose(Axis.ZP.rotation(.12F));
             pose.mulPose(Axis.YP.rotation(i == 0 ? spin : -spin));

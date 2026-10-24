@@ -18,4 +18,8 @@ public final class ClientPayloadHandler {
         d.syncedHasRing = payload.data().getBoolean("syncHasRing");
         ClientFlameCache.put(payload.entityId(), d);
     }
+
+    public static void handleFx(com.reborndw.network.FlameFxPayload payload) {
+        com.reborndw.client.fx.FxManager.add(payload);
+    }
 }

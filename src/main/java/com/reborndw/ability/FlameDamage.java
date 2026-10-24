@@ -5,9 +5,8 @@ import com.reborndw.config.KitConfig;
 import com.reborndw.flame.Flame;
 import com.reborndw.flame.Rank;
 import com.reborndw.registry.ModRegistry;
+import com.reborndw.fx.FlameFx;
 import com.reborndw.util.DelayedTasks;
-import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -23,7 +22,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -38,7 +36,7 @@ public final class FlameDamage {
     public static final ResourceKey<DamageType> FLAME = ResourceKey.create(Registries.DAMAGE_TYPE, RebornDW.id("flame"));
     public static final ResourceKey<DamageType> FLAME_PIERCE = ResourceKey.create(Registries.DAMAGE_TYPE, RebornDW.id("flame_pierce"));
 
-    public static final int NO_ECHO = 1, NO_CHAIN = 2;
+    public static final int NO_ECHO = 1, NO_CHAIN = 2, NO_FX = 4;
     /** Entity tag: Cloud Spread doesn't copy this projectile. */
     public static final String TAG_NO_SPLIT = RebornDW.MODID + ".no_split";
 
@@ -78,6 +76,7 @@ public final class FlameDamage {
             current = prev;
         }
         if (!hit) return false;
+        if ((flags & NO_FX) == 0) FlameFx.hit(level, flame, target, attacker, .8F);
         onHit(attacker, target, flame, amount, eff, flags, 1, 1.0);
         return true;
     }
@@ -112,21 +111,13 @@ public final class FlameDamage {
                                     && e.distanceTo(src) <= range)
                     .stream().min(Comparator.comparingDouble(e -> e.distanceToSqr(src))).orElse(null);
             if (next == null) break;
-            arc(attacker.serverLevel(), src.position().add(0, src.getBbHeight() / 2, 0), next.position().add(0, next.getBbHeight() / 2, 0));
+            FlameFx.bolt(attacker.serverLevel(), Flame.LIGHTNING, src, next);
+            attacker.serverLevel().playSound(null, next.getX(), next.getY(), next.getZ(), SoundEvents.TRIDENT_THUNDER.value(), SoundSource.PLAYERS, 0.15F, 2.0F);
             next.invulnerableTime = 0;
             deal(attacker, next, Flame.LIGHTNING, chainDamage, eff, NO_CHAIN);
             hit.add(next);
             from = next;
         }
-    }
-
-    private static void arc(ServerLevel level, Vec3 a, Vec3 b) {
-        int steps = (int) Math.max(3, a.distanceTo(b) * 3);
-        for (int i = 0; i <= steps; i++) {
-            Vec3 p = a.lerp(b, i / (double) steps);
-            level.sendParticles(ParticleTypes.ELECTRIC_SPARK, p.x, p.y, p.z, 1, 0.05, 0.05, 0.05, 0);
-        }
-        level.playSound(null, b.x, b.y, b.z, SoundEvents.TRIDENT_THUNDER.value(), SoundSource.PLAYERS, 0.15F, 2.0F);
     }
 
     /** Cloud: a chance for the hit to repeat a moment later at half damage. Echoes don't echo. */
@@ -136,9 +127,7 @@ public final class FlameDamage {
         DelayedTasks.schedule(5, () -> {
             if (!target.isAlive() || attacker.isRemoved()) return;
             target.invulnerableTime = 0;
-            if (deal(attacker, target, Flame.CLOUD, amount * 0.5F, eff, NO_ECHO) && target.level() instanceof ServerLevel sl)
-                sl.sendParticles(new DustParticleOptions(SkyAbilities.rgb(Flame.CLOUD.color), 1.2F),
-                        target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(), 8, 0.3, 0.4, 0.3, 0);
+            deal(attacker, target, Flame.CLOUD, amount * 0.5F, eff, NO_ECHO); // the echo's own hit effect shows it
         });
     }
 
@@ -162,6 +151,6 @@ public final class FlameDamage {
             }
         }
         if (target.level() instanceof ServerLevel sl)
-            sl.sendParticles(ParticleTypes.WITCH, target.getX(), target.getEyeY() + 0.3, target.getZ(), 6, 0.3, 0.2, 0.3, 0);
+            FlameFx.burst(sl, Flame.MIST, target.position().add(0, target.getBbHeight() + .2, 0), .5F);
     }
 }

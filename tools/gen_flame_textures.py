@@ -86,3 +86,36 @@ for i in range(32):
         bd.line([((x0 + g[0] * 10) * S, (y0 + g[1] * 32) * S), ((x0 + g[2] * 10) * S, (y0 + g[3] * 32) * S)], fill=W, width=3 * S)
 band.resize((512, 64), Image.LANCZOS).save(os.path.join(ENT, 'script_ring.png'))
 print('ok')
+
+# ---- flame-coloured glints for infused items (64x64, tileable). Tinted by the flame's more colourful shade.
+import math
+LOOKS = {  # flame: (core, edge) as in FlameLooks.java
+    'sky': (0xFF8A1E, 0xFFD98A), 'storm': (0xFF4D6D, 0x7D0C20), 'rain': (0x2F80ED, 0x8FE3FF), 'sun': (0xFFFBE0, 0xE3E83A),
+    'lightning': (0xD8FFE0, 0x3DDC64), 'cloud': (0xC026D3, 0xE0C6FF), 'mist': (0x6C3FA8, 0xC4B5FF), 'earth': (0xF04A1D, 0xFFA23A),
+    'glacier': (0x9A1EA9, 0xAF6BFF), 'forest': (0xFFEF80, 0xCAD018), 'mountain': (0x7AFF95, 0x22BE49), 'swamp': (0xFF0B37, 0x640A1A),
+    'desert': (0x563286, 0x7E5EFF), 'river': (0x1264D1, 0x3FCFFF), 'night': (0x0B0618, 0x3B1D7A)}
+def rgb(c): return ((c >> 16) & 255, (c >> 8) & 255, c & 255)
+def sat(c):
+    r, g, b = rgb(c); mx, mn = max(r, g, b), min(r, g, b)
+    return 0 if mx == 0 else (mx - mn) / mx
+MISC = os.path.join(ROOT, 'textures', 'misc'); os.makedirs(MISC, exist_ok=True)
+N = 64
+def h2(x, y): return ((x * 374761393 + y * 668265263) ^ ((x * 374761393 + y * 668265263) >> 13)) * 1274126177 & 0xFFFF
+for name, (core, edge) in LOOKS.items():
+    hue = core if sat(core) >= sat(edge) else edge
+    if name == 'night': hue = 0x9B6BFF  # a dark flame glints in its rim colour
+    hr, hg, hb = rgb(hue)
+    m = max(hr, hg, hb, 1); hr, hg, hb = hr * 255 / m, hg * 255 / m, hb * 255 / m  # full brightness, same hue
+    im = Image.new('RGB', (N, N)); px = im.load()
+    for y in range(N):
+        for x in range(N):
+            v = 0.0
+            for k, (fx, fy, ph, w) in enumerate([(1, 1, 0.0, .55), (2, 1, 1.7, .30), (1, 3, 3.1, .25), (3, 2, 4.4, .15)]):
+                v += w * (0.5 + 0.5 * math.sin(2 * math.pi * (fx * x + fy * y) / N + ph))
+            v = (v / 1.25) ** .8 + (h2(x // 2, y // 2) / 65535 - .5) * .08
+            v = max(0.0, min(1.0, v))
+            v *= .82
+            w = max(0.0, v - .65) * 1.6 * 255  # the glint blend squares colour, so it needs bright texels; peaks go white
+            px[x, y] = (min(255, int(hr * v + w)), min(255, int(hg * v + w)), min(255, int(hb * v + w)))
+    im.save(os.path.join(MISC, 'glint_%s.png' % name))
+print('glints ok')

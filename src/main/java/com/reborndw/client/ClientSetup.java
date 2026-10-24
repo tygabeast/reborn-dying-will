@@ -74,6 +74,31 @@ public final class ClientSetup {
     }
 
     @SubscribeEvent
+    public static void renderBuffers(net.neoforged.neoforge.client.event.RegisterRenderBuffersEvent event) {
+        InfusionGlint.registerBuffers(event);
+    }
+
+    /** A small flame mark on infused items in slots: in the flame's colour while live, grey while dormant. */
+    @SubscribeEvent
+    public static void decorations(net.neoforged.neoforge.client.event.RegisterItemDecorationsEvent event) {
+        net.neoforged.neoforge.client.IItemDecorator mark = (g, font, stack, x, y) -> {
+            var inf = stack.get(ModRegistry.INFUSION.get());
+            if (inf == null) return false;
+            boolean live = InfusionGlint.live(stack, null) == inf.flame();
+            int c = 0xFF000000 | (live ? inf.flame().color : 0x6B6B6B), dark = 0xFF000000 | (live ? 0x3A1A00 : 0x2A2A2A);
+            g.pose().pushPose();
+            g.pose().translate(0, 0, 200);
+            g.fill(x, y + 1, x + 4, y + 5, dark);      // outline
+            g.fill(x + 1, y + 2, x + 3, y + 4, c);     // body
+            g.fill(x + 1, y, x + 2, y + 2, dark);
+            g.fill(x + 1, y + 1, x + 2, y + 2, c);     // tip
+            g.pose().popPose();
+            return false;
+        };
+        for (net.minecraft.world.item.Item item : net.minecraft.core.registries.BuiltInRegistries.ITEM) event.register(item, mark);
+    }
+
+    @SubscribeEvent
     public static void screens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
         event.register(ModRegistry.RING_FORGE_MENU.get(), RingForgeScreen::new);
         event.register(ModRegistry.INFUSION_ANVIL_MENU.get(), InfusionAnvilScreen::new);

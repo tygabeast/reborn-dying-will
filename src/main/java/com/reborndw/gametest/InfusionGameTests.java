@@ -246,4 +246,46 @@ public class InfusionGameTests {
         });
         return sum[0];
     }
+
+    private static void block(ServerPlayer p, net.minecraft.world.entity.LivingEntity attacker, float amount) {
+        var src = p.damageSources().mobAttack(attacker);
+        InfusionEffects.shieldBlock(new net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent(p,
+                new net.neoforged.neoforge.common.damagesource.DamageContainer(src, amount), true));
+    }
+
+    @GameTest(template = "test_floor")
+    public static void shieldBlocksByFlame(GameTestHelper h) {
+        // Sun: blocked damage heals
+        ServerPlayer sun = flamePlayer(h, Flame.SUN, Rank.C);
+        sun.setItemInHand(InteractionHand.OFF_HAND, infused(Items.SHIELD, Flame.SUN, Rank.C));
+        sun.setHealth(10F);
+        Zombie z = zombie(h, 2, 2);
+        block(sun, z, 6F);
+        check(h, sun.getHealth() > 11.5F, "Sun shield heals 30% of a 6 damage block, got " + sun.getHealth());
+        // Storm: the attacker's armor wears
+        ServerPlayer storm = flamePlayer(h, Flame.STORM, Rank.C);
+        storm.setItemInHand(InteractionHand.OFF_HAND, infused(Items.SHIELD, Flame.STORM, Rank.C));
+        Zombie armored = zombie(h, 3, 2);
+        armored.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, new ItemStack(Items.IRON_CHESTPLATE));
+        block(storm, armored, 5F);
+        check(h, armored.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).getDamageValue() >= 10, "Storm shield wears the attacker's armor");
+        // Rain: a Tranquility stack on the attacker
+        ServerPlayer rain = flamePlayer(h, Flame.RAIN, Rank.C);
+        rain.setItemInHand(InteractionHand.OFF_HAND, infused(Items.SHIELD, Flame.RAIN, Rank.C));
+        Zombie calmed = zombie(h, 4, 2);
+        block(rain, calmed, 4F);
+        check(h, Tranquility.stacks(calmed) >= 1, "Rain shield calms the attacker");
+        // Sky: absorption for the blocker
+        ServerPlayer sky = flamePlayer(h, Flame.SKY, Rank.C);
+        sky.setItemInHand(InteractionHand.OFF_HAND, infused(Items.SHIELD, Flame.SKY, Rank.C));
+        block(sky, zombie(h, 5, 2), 4F);
+        check(h, sky.hasEffect(net.minecraft.world.effect.MobEffects.ABSORPTION), "Sky shield shares absorption");
+        // a shield infused with a flame that isn't active does nothing
+        ServerPlayer off = flamePlayer(h, Flame.SKY, Rank.C);
+        off.setItemInHand(InteractionHand.OFF_HAND, infused(Items.SHIELD, Flame.SUN, Rank.C));
+        off.setHealth(10F);
+        block(off, zombie(h, 6, 2), 6F);
+        check(h, off.getHealth() == 10F, "a dormant infusion does nothing");
+        h.succeed();
+    }
 }

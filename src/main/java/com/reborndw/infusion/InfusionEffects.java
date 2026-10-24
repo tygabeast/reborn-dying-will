@@ -9,6 +9,7 @@ import com.reborndw.flame.Flame;
 import com.reborndw.flame.FlameData;
 import com.reborndw.flame.FlameLogic;
 import com.reborndw.flame.Rank;
+import com.reborndw.fx.FlameFx;
 import com.reborndw.registry.ModRegistry;
 import com.reborndw.util.DelayedTasks;
 import net.minecraft.nbt.CompoundTag;
@@ -77,6 +78,7 @@ public final class InfusionEffects {
         if (s != null) {
             ServerPlayer player = (ServerPlayer) src.getEntity();
             if (s.toggle() && !payToggle(player)) return;
+            FlameFx.hit(player.serverLevel(), s.flame(), target, player, .7F);
             applyMelee(player, target, s, event.getNewDamage());
             return;
         }
@@ -87,6 +89,7 @@ public final class InfusionEffects {
             CompoundTag tag = p.getPersistentData();
             Flame flame = Flame.values()[Math.floorMod(tag.getInt(TAG_FLAME), Flame.values().length)];
             Rank eff = Rank.values()[Math.floorMod(tag.getInt(TAG_RANK), Rank.values().length)];
+            FlameFx.hit(player.serverLevel(), flame, target, p, .7F);
             FlameDamage.onHit(player, target, flame, event.getNewDamage(), eff, 0, 1, 1.0);
             if (flame == Flame.SKY) skyHit(player, target);
         }
@@ -213,13 +216,67 @@ public final class InfusionEffects {
         });
     }
 
-    /** Lightning shields send blocked projectiles back. */
+    /**
+     * An infused shield's block does something in its flame's way: Sky shares absorption with allies, Storm wears the
+     * attacker's armor, Rain calms them, Sun turns the blow into healing, Lightning sends projectiles back, Cloud echoes
+     * the blocked hit onto the attacker, Mist dazes them. Effects on the attacker need a melee attacker.
+     */
     @SubscribeEvent
     public static void shieldBlock(LivingShieldBlockEvent event) {
         if (!event.getBlocked() || !(event.getEntity() instanceof ServerPlayer player)) return;
         InfusionHelper.Source s = shieldSource(player);
-        if (s == null || s.flame() != Flame.LIGHTNING) return;
-        if (event.getDamageSource().getDirectEntity() instanceof Projectile proj) reflect(player, proj);
+        if (s == null) return;
+        var src = event.getDamageSource();
+        float blocked = Math.max(0F, event.getBlockedDamage());
+        LivingEntity attacker = src.getEntity() instanceof LivingEntity le && src.getDirectEntity() == le ? le : null;
+        ServerLevel level = player.serverLevel();
+        FlameFx.shield(player, s.flame(), 1F);
+        switch (s.flame()) {
+            case SKY -> {
+                int ticks = KitConfig.SHIELD_SKY_ABSORB_SECONDS.get() * 20;
+                if (ticks > 0) {
+                    player.addEffect(new MobEffectInstance(net.minecraft.world.effect.MobEffects.ABSORPTION, ticks, 0, false, true, true));
+                    for (LivingEntity e : Kits.alliesAround(player, KitConfig.SHIELD_SKY_RANGE.get())) {
+                        e.addEffect(new MobEffectInstance(net.minecraft.world.effect.MobEffects.ABSORPTION, ticks, 0, false, true, true));
+                        FlameFx.hit(level, Flame.SKY, e, null, .5F);
+                    }
+                }
+            }
+            case STORM -> {
+                if (attacker != null) {
+                    int wear = Math.round((float) (blocked * KitConfig.SHIELD_STORM_ARMOR_WEAR.get()));
+                    if (wear > 0) for (net.minecraft.world.entity.EquipmentSlot slot : net.minecraft.world.entity.EquipmentSlot.values()) {
+                        if (slot.getType() != net.minecraft.world.entity.EquipmentSlot.Type.HUMANOID_ARMOR) continue;
+                        var armor = attacker.getItemBySlot(slot);
+                        if (!armor.isEmpty() && armor.isDamageableItem()) armor.hurtAndBreak(wear, attacker, slot);
+                    }
+                    FlameFx.hit(level, Flame.STORM, attacker, player, .7F);
+                }
+            }
+            case RAIN -> {
+                if (attacker != null && KitConfig.SHIELD_RAIN_STACKS.get() > 0) {
+                    com.reborndw.ability.Tranquility.addStacks(attacker, s.eff(), KitConfig.SHIELD_RAIN_STACKS.get());
+                    FlameFx.hit(level, Flame.RAIN, attacker, player, .7F);
+                }
+            }
+            case SUN -> {
+                float heal = (float) (blocked * KitConfig.SHIELD_SUN_HEAL.get());
+                if (heal > 0) { player.heal(heal); FlameFx.burst(level, Flame.SUN, player.position().add(0, 1, 0), .6F); }
+            }
+            case LIGHTNING -> { if (src.getDirectEntity() instanceof Projectile proj) reflect(player, proj); }
+            case CLOUD -> {
+                float echo = (float) (blocked * KitConfig.SHIELD_CLOUD_ECHO.get());
+                if (attacker != null && echo > 0) DelayedTasks.schedule(5, () -> {
+                    if (!attacker.isAlive() || player.isRemoved()) return;
+                    attacker.invulnerableTime = 0;
+                    FlameDamage.deal(player, attacker, Flame.CLOUD, echo, s.eff(), FlameDamage.NO_ECHO);
+                });
+            }
+            case MIST -> {
+                if (attacker != null && player.getRandom().nextDouble() < KitConfig.SHIELD_MIST_DAZE.get()) FlameDamage.confuse(player, attacker);
+            }
+            default -> {}
+        }
     }
 
     static InfusionHelper.Source shieldSource(ServerPlayer player) {

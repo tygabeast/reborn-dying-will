@@ -55,6 +55,9 @@ public class FlameShotEntity extends Projectile {
         return shot;
     }
 
+    /** How big the shot looks (Sun's are small). */
+    public float size() { return entityData.get(SIZE); }
+
     public void setFlame(Flame flame) { entityData.set(FLAME, flame.ordinal()); }
 
     public Flame flame() {
@@ -101,6 +104,8 @@ public class FlameShotEntity extends Projectile {
     @Override
     protected void onHit(HitResult result) {
         super.onHit(result);
+        if (result.getType() == HitResult.Type.BLOCK && level() instanceof net.minecraft.server.level.ServerLevel sl)
+            com.reborndw.fx.FlameFx.burst(sl, flame(), result.getLocation(), .6F);
         if (!isRemoved()) discard();
     }
 

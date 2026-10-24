@@ -2,7 +2,6 @@ package com.reborndw.event;
 
 import com.reborndw.RebornDW;
 import com.reborndw.ability.AbilityHandler;
-import com.reborndw.ability.SkyAbilities;
 import com.reborndw.command.RebornCommands;
 import com.reborndw.config.ServerConfig;
 import com.reborndw.flame.Flame;
