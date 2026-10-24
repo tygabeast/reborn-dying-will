@@ -30,6 +30,12 @@ neoForge {
             type = 'gameTestServer'
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
+        devClient {
+            client()
+            gameDirectory = project.file('run-dev')
+            systemProperty 'rdw.devshots', 'on'
+            programArguments.addAll('--quickPlaySingleplayer', 'devflat', '--width', '960', '--height', '540', '--username', 'Dev')
+        }
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             logLevel = org.slf4j.event.Level.INFO
@@ -42,6 +48,7 @@ neoForge {
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
+if (project.hasProperty('devshots')) sourceSets.main.java.srcDir 'src/dev/java'
 
 dependencies {
     compileOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}:api"
@@ -74,5 +81,6 @@ tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 // game tests and their template stay out of the published jar
 jar {
     exclude 'com/reborndw/gametest/**'
+    exclude 'com/reborndw/dev/**'
     exclude 'data/reborn_dying_will/structure/test_floor.nbt'
 }

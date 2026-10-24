@@ -35,14 +35,20 @@ public final class FlameEmitter {
         float dens = density(mc) * (calm ? .55F : 1F);
         if (dens <= 0F || L.head.isEmpty()) return;
         RandomSource r = p.getRandom();
-        double yaw = Math.toRadians(p.getYHeadRot());
+        double yaw = Math.toRadians(p.getYHeadRot()), pitch = Math.toRadians(p.getXRot());
         double fx = -Math.sin(yaw), fz = Math.cos(yaw), rx = Math.cos(yaw), rz = Math.sin(yaw);
-        double bx = p.getX() + fx * .24, bz = p.getZ() + fz * .24;
-        double by = p.getY() + 1.83 * (p.getBbHeight() / 1.8) + ClientConfig.FLAME_HEIGHT.get();
+        // the flame's base in head space (see HeadFlameLayer), turned by the head's pitch, then into the world
+        double up = com.reborndw.client.HeadFlameLayer.BROW_UP + ClientConfig.FLAME_RAISE.get();
+        double fwd = com.reborndw.client.HeadFlameLayer.BROW_FORWARD + ClientConfig.FLAME_FORWARD.get();
+        double up2 = up * Math.cos(pitch) - fwd * Math.sin(pitch), fwd2 = fwd * Math.cos(pitch) + up * Math.sin(pitch);
+        double model = 0.9375 * (p.getBbHeight() / 1.8); // player model scale (baby/scaled players follow their size)
+        double pivot = (p.isCrouching() ? 1.501 - 0.2625 : 1.501) * model;
+        double bx = p.getX() + fx * fwd2 * model, bz = p.getZ() + fz * fwd2 * model;
+        double by = p.getY() + pivot + up2 * model;
         for (FlameLook.Emit e : L.head) {
             int n = count(e.rate, dens, r);
             for (int i = 0; i < n; i++) {
-                float side = e.ox * (r.nextFloat() * 2F - 1F), up = between(r, e.oyLo, e.oyHi);
+                float side = e.ox * (r.nextFloat() * 2F - 1F), lift = between(r, e.oyLo, e.oyHi);
                 double vs = e.vx * (r.nextFloat() * 2F - 1F), vy = between(r, e.vyLo, e.vyHi), vf = 0;
                 double px, pz;
                 if (e.ringHi > 0F) { // spawns on a ring and drifts inward
@@ -50,11 +56,11 @@ public final class FlameEmitter {
                     double cx = Math.cos(ang), cz = Math.sin(ang);
                     px = bx + cx * rad * k; pz = bz + cz * rad * k;
                     vs = -cx * pull; vf = -cz * pull;
-                    emit(mc, e, L, k, px, by + up * k, pz, vs * k / 20, vy * k / 20, vf * k / 20, r);
+                    emit(mc, e, L, k, px, by + lift * k, pz, vs * k / 20, vy * k / 20, vf * k / 20, r);
                     continue;
                 }
                 px = bx + rx * side * k; pz = bz + rz * side * k;
-                emit(mc, e, L, k, px, by + up * k, pz, rx * vs * k / 20, vy * k / 20, rz * vs * k / 20, r);
+                emit(mc, e, L, k, px, by + lift * k, pz, rx * vs * k / 20, vy * k / 20, rz * vs * k / 20, r);
             }
         }
     }

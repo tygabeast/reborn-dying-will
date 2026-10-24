@@ -35,8 +35,8 @@ public final class FlameLooks {
 
         l = put(Flame.RAIN, 0x2F80ED, 0x8FE3FF);
         l.sz = .8F; l.body = Body.ORB; l.orbR = 7; l.orbAlpha = .8F; l.underAlpha = .44F;
-        l.head.add(Emit.of(Mote.DROP, 16).life(.8F, 1.3F).at(5, 0, 4).vel(6, 18, 34).size(4).flags(Mote.SWAY)); // rises, never falls
-        l.trail.add(Emit.of(Mote.DROP, 30).life(.4F, .7F).back(6, 18).vel(0, 6, 22).size(3.5F));
+        l.head.add(Emit.of(Mote.DROP, 14).life(.8F, 1.3F).at(5, 0, 4).vel(6, 18, 34).size(3).tint(0x8FE3FF, 0xE0F8FF).flags(Mote.SWAY)); // rises, never falls
+        l.trail.add(Emit.of(Mote.DROP, 26).life(.4F, .7F).back(6, 18).vel(0, 6, 22).size(2.8F).tint(0x8FE3FF, 0xE0F8FF));
         l.shotR = 5;
 
         l = put(Flame.SUN, 0xFFFBE0, 0xE3E83A);
@@ -91,8 +91,8 @@ public final class FlameLooks {
 
         l = put(Flame.SWAMP, 0xFF0B37, 0x640A1A);
         l.n = 3; l.w = 7; l.h = 14; l.script = 1; l.frame = Frame.GAS; l.frameA = 0x0E4A28; l.frameB = 0x2F7A48;
-        l.head.add(Emit.of(Mote.BUBBLE, 6).life(.8F, 1.4F).vel(0, 6, 14).size(3.5F).tint(0x1F6B3A, 0x58C27A).flags(Mote.GROW));
-        l.head.add(Emit.of(Mote.PUFF, 6).life(1F, 1.6F).vel(0, 4, 10).size(5).tint(0x14502E, 0x3F9A5C).flags(Mote.GROW));
+        l.head.add(Emit.of(Mote.BUBBLE, 6).life(.8F, 1.4F).at(4, 0, 2).vel(3, 6, 14).size(2.6F).tint(0x1F6B3A, 0x58C27A).flags(Mote.GROW));
+        l.head.add(Emit.of(Mote.PUFF, 5).life(1F, 1.6F).at(4, 0, 2).vel(4, 4, 10).size(3).tint(0x2F7A48, 0x5FB27A).flags(Mote.GROW));
         l.trail.add(Emit.of(Mote.PUFF, 14).life(.5F, .9F).back(3, 12).vel(0, 0, 8).size(4).tint(0x14502E, 0x3F9A5C).flags(Mote.GROW));
         l.trail.add(Emit.of(Mote.BUBBLE, 8).life(.5F, .8F).back(4, 12).vel(0, 2, 10).size(2.5F).tint(0x1F6B3A, 0x58C27A));
         l.shotR = 5;
@@ -105,9 +105,9 @@ public final class FlameLooks {
 
         l = put(Flame.RIVER, 0x1264D1, 0x3FCFFF);
         l.n = 2; l.w = 6; l.h = 16; l.script = 1;
-        l.head.add(Emit.of(Mote.SLASH, 9).life(.25F, .5F).at(12, -4, 14).size(9).tint(WHITE, 0x3FCFFF));
+        l.head.add(Emit.of(Mote.SLASH, 8).life(.25F, .5F).at(10, -2, 12).size(6).tint(WHITE, 0x3FCFFF));
         l.head.add(Emit.of(Mote.PX, 8).life(.8F, 1.2F).at(6, 0, 2).vel(4, -6, 6).size(1.5F).tint(0x8FE3FF, 0x1264D1).flags(Mote.FALL));
-        l.trail.add(Emit.of(Mote.SLASH, 14).life(.2F, .4F).back(0, 10).at(0, -6, 6).size(10).tint(WHITE, 0x3FCFFF));
+        l.trail.add(Emit.of(Mote.SLASH, 12).life(.2F, .4F).back(0, 10).at(0, -6, 6).size(7).tint(WHITE, 0x3FCFFF));
         l.trail.add(Emit.of(Mote.PX, 10).life(.4F, .7F).back(3, 12).vel(0, -14, 0).size(1.5F).tint(0x8FE3FF, 0x1264D1).flags(Mote.FALL));
         l.shotR = 3;
 
@@ -115,7 +115,7 @@ public final class FlameLooks {
         l = put(Flame.NIGHT, 0x0B0618, 0x3B1D7A);
         l.rim = 0x9B6BFF; l.n = 2; l.w = 5; l.h = 13;
         l.head.add(Emit.of(Mote.PX, 12).life(.5F, .7F).ring(10, 16, 16, 24).size(2).tint(0x9B6BFF, 0x1A0F33));
-        l.head.add(Emit.of(Mote.RING, 2.2F).life(.8F, 1F).at(0, 2, 4).size(15).tint(0x9B6BFF, 0x1A0F33).flags(Mote.COLLAPSE));
+        l.head.add(Emit.of(Mote.RING, 2.2F).life(.8F, 1F).at(0, 6, 8).size(11).tint(0x9B6BFF, 0x1A0F33).flags(Mote.COLLAPSE));
         l.trail.add(Emit.of(Mote.PX, 24).life(.4F, .6F).ring(6, 12, 14, 22).size(2).tint(0x9B6BFF, 0x1A0F33));
         l.shotR = 5; l.shotC0 = 0x6A3FD0; l.shotC1 = 0x9B6BFF;
     }

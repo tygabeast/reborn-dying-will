@@ -13,5 +13,10 @@ public final class ClientInit {
     public static void init(ModContainer container) {
         container.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+        // dev-only screenshot harness (src/dev, never in the released jar)
+        if (System.getProperty("rdw.devshots") != null) {
+            try { Class.forName("com.reborndw.dev.DevShots").getMethod("init").invoke(null); }
+            catch (ReflectiveOperationException e) { com.reborndw.RebornDW.LOGGER.warn("dev shots unavailable", e); }
+        }
     }
 }

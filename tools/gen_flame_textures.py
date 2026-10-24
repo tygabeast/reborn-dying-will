@@ -11,49 +11,64 @@ os.makedirs(PART, exist_ok=True); os.makedirs(ENT, exist_ok=True)
 KINDS = ['px', 'drop', 'bubble', 'spark', 'puff', 'wisp', 'shard', 'chip', 'leaf', 'mini', 'slash', 'ring', 'glow']
 W = (255, 255, 255, 255)
 
-def img(): return Image.new('RGBA', (16, 16), (0, 0, 0, 0))
+R = 32          # sprite size in the atlas
+SS = 8          # supersampling: shapes are drawn on a 16-unit grid at 16*SS pixels, then reduced
+
+def img(n=16 * SS): return Image.new('RGBA', (n, n), (0, 0, 0, 0))
+
+def P(*pts): return [(x * SS, y * SS) for x, y in pts]
 
 def soft(rx, ry, power=1.6, peak=255):
-    im = img(); px = im.load()
-    for y in range(16):
-        for x in range(16):
-            d = (((x + .5 - 8) / rx) ** 2 + ((y + .5 - 8) / ry) ** 2) ** .5
+    im = Image.new('RGBA', (R, R), (0, 0, 0, 0)); px = im.load(); c = R / 2; k = R / 16
+    for y in range(R):
+        for x in range(R):
+            d = (((x + .5 - c) / (rx * k)) ** 2 + ((y + .5 - c) / (ry * k)) ** 2) ** .5
             if d < 1: px[x, y] = (255, 255, 255, int(peak * (1 - d) ** power))
+    return im
+
+def finish(im):
+    im = im.resize((R, R), Image.LANCZOS)
+    px = im.load()
+    for y in range(R):
+        for x in range(R):
+            r, g, b, a = px[x, y]
+            px[x, y] = (255, 255, 255, 0) if a < 8 else (min(255, r), min(255, g), min(255, b), a)
     return im
 
 def make(kind):
     im = img(); d = ImageDraw.Draw(im)
+    w = lambda n: max(1, int(n * SS))
     if kind == 'px':
-        d.rectangle([4, 4, 11, 11], fill=W); d.rectangle([5, 5, 10, 10], fill=(255, 255, 255, 255))
+        d.rounded_rectangle(P((4.5, 4.5), (11.5, 11.5)), radius=w(1.2), fill=W)
     elif kind == 'drop':
-        d.polygon([(8, 1), (12, 8), (12, 11), (10, 14), (6, 14), (4, 11), (4, 8)], fill=(235, 235, 235, 255))
-        d.rectangle([6, 8, 7, 10], fill=W)
+        d.polygon(P((8, 1.5), (11.5, 8), (11.8, 10.5), (10.2, 13.6), (8, 14.4), (5.8, 13.6), (4.2, 10.5), (4.5, 8)), fill=(235, 235, 235, 255))
+        d.ellipse(P((6, 8.5), (7.6, 11)), fill=W)
     elif kind == 'bubble':
-        d.ellipse([2, 2, 13, 13], outline=(255, 255, 255, 230)); d.rectangle([5, 5, 6, 6], fill=W)
-        d.ellipse([3, 3, 12, 12], fill=(255, 255, 255, 40))
+        d.ellipse(P((2, 2), (14, 14)), fill=(255, 255, 255, 45), outline=(255, 255, 255, 235), width=w(1.1))
+        d.ellipse(P((4.5, 4.5), (6.8, 6.8)), fill=W)
     elif kind == 'spark':
-        d.line([(8, 1), (8, 14)], fill=(255, 255, 255, 220)); d.line([(1, 8), (14, 8)], fill=(255, 255, 255, 220))
-        d.rectangle([7, 7, 8, 8], fill=W)
-    elif kind == 'puff': im = soft(7.5, 7.5, 1.2, 230)
-    elif kind == 'wisp': im = soft(7.5, 4.5, 1.1, 200)
+        d.line(P((8, 1), (8, 15)), fill=(255, 255, 255, 230), width=w(1.2)); d.line(P((1, 8), (15, 8)), fill=(255, 255, 255, 230), width=w(1.2))
+        d.ellipse(P((6.5, 6.5), (9.5, 9.5)), fill=W)
+    elif kind == 'puff': return soft(7.5, 7.5, 1.4, 220)
+    elif kind == 'wisp': return soft(7.5, 4.5, 1.4, 190)
     elif kind == 'shard':
-        d.polygon([(8, 0), (12, 8), (8, 15), (4, 8)], fill=(210, 210, 210, 255))
-        d.polygon([(8, 0), (12, 8), (8, 8)], fill=W); d.line([(8, 1), (8, 14)], fill=(255, 255, 255, 255))
+        d.polygon(P((8, 0.5), (12, 8), (8, 15.5), (4, 8)), fill=(205, 205, 205, 255))
+        d.polygon(P((8, 0.5), (12, 8), (8, 8)), fill=W); d.line(P((8, 1), (8, 15)), fill=W, width=w(.6))
     elif kind == 'chip':
-        d.polygon([(2, 5), (9, 2), (14, 7), (12, 13), (5, 14), (3, 10)], fill=(220, 220, 220, 255))
-        d.polygon([(2, 5), (9, 2), (8, 8)], fill=W)
+        d.polygon(P((2, 5), (9, 2), (14, 7), (12, 13), (5, 14), (3, 10)), fill=(215, 215, 215, 255))
+        d.polygon(P((2, 5), (9, 2), (8, 8)), fill=W)
     elif kind == 'leaf':
-        d.polygon([(1, 8), (6, 3), (12, 4), (15, 8), (12, 12), (6, 13)], fill=(225, 225, 225, 255))
-        d.line([(2, 8), (14, 8)], fill=W)
+        d.polygon(P((1, 8), (4, 4.5), (8, 3.5), (12, 4.5), (15, 8), (12, 11.5), (8, 12.5), (4, 11.5)), fill=(225, 225, 225, 255))
+        d.line(P((2, 8), (14, 8)), fill=W, width=w(.7))
     elif kind == 'mini':
-        d.polygon([(8, 1), (12, 7), (12, 11), (10, 14), (6, 14), (4, 11), (4, 7)], fill=(235, 235, 235, 255))
-        d.polygon([(8, 6), (10, 10), (9, 13), (7, 13), (6, 10)], fill=W)
+        d.polygon(P((8, 1), (11.5, 7), (12, 10.5), (10, 14), (6, 14), (4, 10.5), (4.5, 7)), fill=(235, 235, 235, 255))
+        d.polygon(P((8, 6), (10, 10), (9, 13), (7, 13), (6, 10)), fill=W)
     elif kind == 'slash':
-        d.line([(2, 13), (13, 2)], fill=W, width=2); d.line([(3, 13), (13, 3)], fill=(255, 255, 255, 120))
+        d.line(P((3, 13), (13, 3)), fill=W, width=w(1.4)); d.line(P((4, 13.5), (13.5, 4)), fill=(255, 255, 255, 110), width=w(.8))
     elif kind == 'ring':
-        d.ellipse([1, 1, 14, 14], outline=W); d.ellipse([2, 2, 13, 13], outline=(255, 255, 255, 110))
-    elif kind == 'glow': im = soft(7.9, 7.9, 1.0, 255)
-    return im
+        d.ellipse(P((1.5, 1.5), (14.5, 14.5)), outline=W, width=w(1.1)); d.ellipse(P((3, 3), (13, 13)), outline=(255, 255, 255, 90), width=w(.7))
+    elif kind == 'glow': return soft(7.9, 7.9, 1.2, 255)
+    return finish(im)
 
 for k in KINDS: make(k).save(os.path.join(PART, 'mote_%s.png' % k))
 Image.new('RGBA', (4, 4), (255, 255, 255, 255)).save(os.path.join(ENT, 'flame_white.png'))

@@ -1,10 +1,10 @@
-# Reborn - Dying Will (0.3.1)
+# Reborn - Dying Will (0.3.2)
 
 NeoForge 21.1 / Minecraft 1.21.1. Requires Curios (9.x for 1.21.1).
 
 Milestone 1 laid the foundation: the flame system, the Dying Will form ladder, Flame Gems, the basic resonator
 and Sky's ring kit. Milestone 2 (0.2.0) added the other six Sky-set flames' ring kits, the Ring Forge and flame pills.
-0.3.1 is graphics part 1: the in-game flame looks (below). Milestone 3 (0.3.0) added flame infusion: the Infuse toggle, the Infusion Anvil and infused weapon moves.
+0.3.2 reworks the in-game flame looks from 0.3.1 testing (below). Milestone 3 (0.3.0) added flame infusion: the Infuse toggle, the Infusion Anvil and infused weapon moves.
 Every number is a placeholder in the server config files `reborn_dying_will-server.toml` and `reborn_dying_will-kits.toml`.
 
 ## What's in it
@@ -152,15 +152,27 @@ harder and restore 1% of capacity to allied players within 6 blocks.
 Not yet: signatures (X-Burner, Disintegration Beam, Downpour, Maximum Cannon, Lightning Bulwark, Cloud Multiplication,
 Illusion Realm, Hallucination), gloves, Storm/Cloud-infused tools' mining effects.
 
-## Flame looks (0.3.1)
-- Every active form draws a tapered flame on the forehead, two crossed planes with a rounded base, in the colours and
-  shapes picked from the preview. Dying Will is jagged and fast; Hyper is calmer and smoother; Ultimate is Hyper at 1.3x.
-- Each flame throws its own motes (sparks, rising drops, chips, leaves, bubbles, sand...). Earth-set flames carry
-  orbiting script rings; Earth's is a canon Y flame with two crossing rings.
-- Flame shots are camera-facing glowing bodies with a mote trail (Lightning's is a green crackle web).
-- Client config "Flame looks": show on/off, particle density, size, height offset, script rings. The game's Particles
+## Flame looks
+- Every active form draws a flame on the forehead in the picked look. It stands just in front of the brow (clear of hair
+  and helmets) and always turns to face the camera, so there is no seam or flat edge. Each tongue is shaded across its
+  width with soft edges, a brighter core and a glow, so it reads as round. Dying Will is jagged and fast; Hyper is calmer
+  and smoother; Ultimate is Hyper at 1.3x.
+- Each flame throws its own motes (sparks, rising drops, chips, leaves, bubbles, sand...). Earth-set flames have upright
+  bands of script circling the head; Earth's Y flame has two crossing bands. Night is a dark core with a violet rim.
+- Flame shots are glowing bodies with a comet tail pointing back along their flight, plus a mote trail (Lightning's is a
+  green crackle web, Sun's a ray burst, Earth's a Y).
+- Client config "Flame looks": show on/off, particle density, size, raise, forward, script rings. The game's Particles
   setting also thins the motes. Players more than 64 blocks away are skipped.
-- The Earth-set flame colours (gems, HUD) now follow the new looks.
+
+### 0.3.2 changes
+- Flame position: 0.08 lower than 0.3.1 (your tested offset, now the default) and pushed forward past helmets. The old
+  "heightOffset" setting is replaced by "raise" and "forward" (both 0 by default; the old value is ignored).
+- Head flames are camera-facing, softly shaded and glowing instead of two crossed flat planes.
+- Script bands stand upright around the head instead of lying flat.
+- Motes now spawn at the flame itself (including when looking up or down) and use smoother, higher-resolution sprites.
+- Shots gained a glowing body and comet tail (0.3.1 shots could hide inside the body of whoever fired them).
+- Dev only (not in the jar): `src/dev` holds a screenshot harness (`gradle runDevClient -Pdevshots`) used to check
+  the looks in a real client before release.
 
 ## Keys (rebindable, "Reborn - Dying Will" category)
 Z Primary, X Secondary, C Signature, H Hyper, V Release, Y choose flame, G Infuse, J toggle the ability panel.

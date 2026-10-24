@@ -55,6 +55,8 @@ public class FlameShotEntity extends Projectile {
         return shot;
     }
 
+    public void setFlame(Flame flame) { entityData.set(FLAME, flame.ordinal()); }
+
     public Flame flame() {
         int i = entityData.get(FLAME);
         return Flame.values()[Math.floorMod(i, Flame.values().length)];
